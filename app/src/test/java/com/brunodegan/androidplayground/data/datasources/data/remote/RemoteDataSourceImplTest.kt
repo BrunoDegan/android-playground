@@ -20,7 +20,7 @@ class RemoteDataSourceImplTest {
     @get:Rule
     val mainDispatcher = TestDispatcherRule()
 
-    private val restApiService: KtorRestApiService = mockk(relaxed = true)
+    private val restApiService: KtorRestApiService = mockk()
     private lateinit var remoteDataSource: RemoteDataSource
 
     @Before

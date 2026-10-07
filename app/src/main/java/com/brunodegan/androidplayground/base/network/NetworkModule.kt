@@ -6,7 +6,6 @@ import com.brunodegan.androidplayground.data.api.KtorRestApiService.Companion.AC
 import com.brunodegan.androidplayground.data.api.KtorRestApiService.Companion.APPLICATION_JSON
 import com.brunodegan.androidplayground.data.api.KtorRestApiService.Companion.AUTHORIZATION_HEADER
 import com.brunodegan.androidplayground.data.api.KtorRestApiService.Companion.BASE_URL
-import com.brunodegan.androidplayground.data.api.KtorRestApiService.Companion.CONTENT_TYPE
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -67,8 +66,9 @@ class NetworkModule {
 
                 defaultRequest {
                     url(BASE_URL)
+                    // No default Content-Type: the OkHttp engine re-adds it on bodiless requests and the
+                    // duplicate makes TMDB answer 400 DuplicateHeaderError. Bodies set their own type.
                     header(ACCEPT, APPLICATION_JSON)
-                    header(CONTENT_TYPE, APPLICATION_JSON)
                     header(AUTHORIZATION_HEADER, BuildConfig.TMDB_BEARER_TOKEN)
                 }
             }

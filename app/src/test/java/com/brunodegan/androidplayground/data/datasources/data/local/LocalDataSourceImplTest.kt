@@ -10,9 +10,11 @@ import com.brunodegan.androidplayground.data.datasources.local.daos.UpComingDao
 import com.brunodegan.androidplayground.testfixtures.MockUtils
 import com.brunodegan.androidplayground.testfixtures.TestDispatcherRule
 import io.mockk.coEvery
+import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.unmockkAll
+import io.mockk.verify
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -21,16 +23,16 @@ import org.junit.Rule
 import org.junit.Test
 import kotlin.test.assertEquals
 
-class LocalDataSourceTest {
+class LocalDataSourceImplTest {
     @get:Rule
     val mainDispatcher = TestDispatcherRule()
 
     private lateinit var localDataSource: LocalDataSource
-    private val favoritesDao: FavoritesDao = mockk(relaxed = true)
-    private val nowPlayingDao: NowPlayingDao = mockk(relaxed = true)
-    private val topRatedDao: TopRatedDao = mockk(relaxed = true)
-    private val upComingDao: UpComingDao = mockk(relaxed = true)
-    private val popularDao: PopularDao = mockk(relaxed = true)
+    private val favoritesDao: FavoritesDao = mockk()
+    private val nowPlayingDao: NowPlayingDao = mockk()
+    private val topRatedDao: TopRatedDao = mockk()
+    private val upComingDao: UpComingDao = mockk()
+    private val popularDao: PopularDao = mockk()
 
     @Before
     fun setup() {
@@ -48,10 +50,11 @@ class LocalDataSourceTest {
     fun `GIVEN favorite movies entity mocks WHEN local storage saves favorite movies THEN assert favoriteDao inserts is called`() =
         runTest {
             val mockFavoritesMovies = MockUtils.mockFavoriteMoviesEntity()
+            coJustRun { favoritesDao.insertFavorite(mockFavoritesMovies) }
 
             localDataSource.saveFavorites(mockFavoritesMovies)
 
-            coVerify(exactly = 1) {
+            verify(exactly = 1) {
                 favoritesDao.insertFavorite(mockFavoritesMovies)
             }
         }
@@ -137,70 +140,54 @@ class LocalDataSourceTest {
         }
 
     @Test
-    fun `GIVEN now playing movies entity mocks WHEN local storage saves now playing movie THEN asserts mocks equality and calling once`() =
+    fun `GIVEN now playing movies entity mocks WHEN local storage saves now playing movie THEN inserts into dao once`() =
         runTest {
             val mockNowPlayingMovies = MockUtils.mockNowPlayingMoviesEntity()
-            coEvery { localDataSource.saveNowPlaying(mockNowPlayingMovies) } returns Unit
+            coJustRun { nowPlayingDao.insertNowPlayingMovies(mockNowPlayingMovies) }
 
-            nowPlayingDao.insertNowPlayingMovies(mockNowPlayingMovies)
-            val result = localDataSource.getNowPlaying()
+            localDataSource.saveNowPlaying(mockNowPlayingMovies)
 
-            result.collect { nowPlayingMovies ->
-                assertEquals(mockNowPlayingMovies, nowPlayingMovies)
-            }
             coVerify(exactly = 1) {
-                nowPlayingDao.getAllNowPlaying()
+                nowPlayingDao.insertNowPlayingMovies(mockNowPlayingMovies)
             }
         }
 
     @Test
-    fun `GIVEN popular movies entity mocks WHEN local storage saves popular movies THEN asserts mocks equality and calling once`() =
+    fun `GIVEN popular movies entity mocks WHEN local storage saves popular movies THEN inserts into dao once`() =
         runTest {
             val mockPopularMovies = MockUtils.mockPopularMoviesEntity()
-            coEvery { localDataSource.savePopular(mockPopularMovies) } returns Unit
+            coJustRun { popularDao.insertPopularMovies(mockPopularMovies) }
 
-            popularDao.insertPopularMovies(mockPopularMovies)
-            val result = localDataSource.getPopular()
+            localDataSource.savePopular(mockPopularMovies)
 
-            result.collect { popularMovies ->
-                assertEquals(mockPopularMovies, popularMovies)
-            }
             coVerify(exactly = 1) {
-                popularDao.getAllPopular()
+                popularDao.insertPopularMovies(mockPopularMovies)
             }
         }
 
     @Test
-    fun `GIVEN top rated movies entity mocks WHEN local storage top rated movies THEN asserts mocks equality and calling once`() =
+    fun `GIVEN top rated movies entity mocks WHEN local storage saves top rated movies THEN inserts into dao once`() =
         runTest {
             val mockTopRatedMovies = MockUtils.mockTopRatedMoviesEntity()
-            coEvery { localDataSource.saveTopRated(mockTopRatedMovies) } returns Unit
+            coJustRun { topRatedDao.insertTopRatedMovies(mockTopRatedMovies) }
 
-            topRatedDao.insertTopRatedMovies(mockTopRatedMovies)
-            val result = localDataSource.getTopRated()
+            localDataSource.saveTopRated(mockTopRatedMovies)
 
-            result.collect { topRatedMovies ->
-                assertEquals(mockTopRatedMovies, topRatedMovies)
-            }
             coVerify(exactly = 1) {
-                topRatedDao.getAllTopRated()
+                topRatedDao.insertTopRatedMovies(mockTopRatedMovies)
             }
         }
 
     @Test
-    fun `GIVEN upcoming movies entity mocks WHEN local storage upcoming movies THEN asserts mocks equality and calling once`() =
+    fun `GIVEN upcoming movies entity mocks WHEN local storage saves upcoming movies THEN inserts into dao once`() =
         runTest {
             val mockUpcomingMovies = MockUtils.mockUpcomingMoviesEntity()
-            coEvery { localDataSource.saveUpcoming(mockUpcomingMovies) } returns Unit
+            coJustRun { upComingDao.insertUpcomingMovies(mockUpcomingMovies) }
 
-            upComingDao.insertUpcomingMovies(mockUpcomingMovies)
-            val result = localDataSource.getUpcoming()
+            localDataSource.saveUpcoming(mockUpcomingMovies)
 
-            result.collect { upcomingMovies ->
-                assertEquals(mockUpcomingMovies, upcomingMovies)
-            }
             coVerify(exactly = 1) {
-                upComingDao.getAllUpcoming()
+                upComingDao.insertUpcomingMovies(mockUpcomingMovies)
             }
         }
 

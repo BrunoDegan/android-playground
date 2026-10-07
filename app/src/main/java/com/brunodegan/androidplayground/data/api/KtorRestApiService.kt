@@ -50,7 +50,6 @@ class KtorRestApiService(
     companion object {
         const val AUTHORIZATION_HEADER = "Authorization"
         const val APPLICATION_JSON = "application/json"
-        const val CONTENT_TYPE = "content-type"
         const val ACCEPT = "accept"
         const val BASE_URL = "https://api.themoviedb.org/3/"
 

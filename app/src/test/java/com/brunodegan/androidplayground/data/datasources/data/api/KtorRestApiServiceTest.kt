@@ -19,6 +19,7 @@ import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -26,7 +27,6 @@ import org.junit.Test
 
 class KtorRestApiServiceTest {
     private val requests = mutableListOf<HttpRequestData>()
-    private var status = HttpStatusCode.OK
     private var responseBody = ""
     private lateinit var apiService: KtorRestApiService
 
@@ -37,8 +37,8 @@ class KtorRestApiServiceTest {
                 requests += request
                 respond(
                     content = responseBody,
-                    status = status,
-                    headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                    status = HttpStatusCode.OK,
+                    headers = headersOf(HttpHeaders.ContentType, APPLICATION_JSON),
                 )
             }
         apiService = KtorRestApiService(NetworkModule.createHttpClient(engine))
@@ -203,20 +203,27 @@ class KtorRestApiServiceTest {
             assertEquals(404, (addFailure as ApiException).statusCode)
         }
 
+    @After
+    fun tearDown() = unmockkAll()
+
     private fun assertRequest(
         method: HttpMethod,
         path: String,
     ) {
         val request = requests.single()
         assertEquals(method, request.method)
-        assertEquals("api.themoviedb.org", request.url.host)
+        assertEquals(HOST_NAME, request.url.host)
         assertEquals(path, request.url.encodedPath)
-        assertEquals("pt-BR", request.url.parameters["language"])
-        assertEquals("application/json", request.headers[KtorRestApiService.ACCEPT])
-        assertEquals("application/json", request.headers[KtorRestApiService.CONTENT_TYPE])
+        assertEquals(PT_BR, request.url.parameters[LANGUAGE])
+        assertEquals(APPLICATION_JSON, request.headers[KtorRestApiService.ACCEPT])
+        assertNull(request.headers[HttpHeaders.ContentType])
         assertEquals(BuildConfig.TMDB_BEARER_TOKEN, request.headers[KtorRestApiService.AUTHORIZATION_HEADER])
     }
 
-    @After
-    fun tearDown() = unmockkAll()
+    companion object {
+        const val APPLICATION_JSON = "application/json"
+        const val HOST_NAME = "api.themoviedb.org"
+        const val LANGUAGE = "language"
+        const val PT_BR = "pt-BR"
+    }
 }

@@ -26,7 +26,7 @@ class RemoveFromFavoritesUseCaseTest {
     @get:Rule
     val mainDispatcher = TestDispatcherRule()
 
-    private val repository: MoviesRepository = mockk(relaxed = true)
+    private val repository: MoviesRepository = mockk()
     private lateinit var useCase: RemoveFromFavoritesUseCase
     private val movieId = 1
 
