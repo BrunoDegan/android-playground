@@ -4,43 +4,22 @@ import com.brunodegan.androidplayground.BuildConfig
 import com.brunodegan.androidplayground.data.datasources.local.entities.AddToFavoritesApiResponse
 import com.brunodegan.androidplayground.data.datasources.local.entities.AddToFavoritesRequest
 import com.brunodegan.androidplayground.data.datasources.local.entities.MoviesApiDataResponse
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
-import retrofit2.http.Query
 
 interface RestApiService {
-    @GET(NOW_PLAYING_URL)
-    suspend fun fetchNowPlaying(
-        @Query(LANGUAGE) language: String = PT_BR,
-    ): MoviesApiDataResponse
+    suspend fun fetchNowPlaying(language: String = PT_BR): MoviesApiDataResponse
 
-    @GET(POPULAR_URL)
-    suspend fun fetchPopular(
-        @Query(LANGUAGE) language: String = PT_BR,
-    ): MoviesApiDataResponse
+    suspend fun fetchPopular(language: String = PT_BR): MoviesApiDataResponse
 
-    @GET(TOP_RATED_URL)
-    suspend fun fetchTopRated(
-        @Query(LANGUAGE) language: String = PT_BR,
-    ): MoviesApiDataResponse
+    suspend fun fetchTopRated(language: String = PT_BR): MoviesApiDataResponse
 
-    @GET(UPCOMING_URL)
-    suspend fun fetchUpcoming(
-        @Query(LANGUAGE) language: String = PT_BR,
-    ): MoviesApiDataResponse
+    suspend fun fetchUpcoming(language: String = PT_BR): MoviesApiDataResponse
 
-    @POST(ADD_TO_FAVORITES_URL)
     suspend fun addToFavorites(
-        @Path(ACCOUNT_ID) accountId: String = BuildConfig.TMDB_ACCOUNT_ID,
-        @Body addToFavoritesRequest: AddToFavoritesRequest,
+        accountId: String = BuildConfig.TMDB_ACCOUNT_ID,
+        addToFavoritesRequest: AddToFavoritesRequest,
     ): AddToFavoritesApiResponse
 
-    @GET(GET_FAVORITES_URL)
-    suspend fun getFavorites(
-        @Path(ACCOUNT_ID) accountId: String = BuildConfig.TMDB_ACCOUNT_ID,
-    ): MoviesApiDataResponse
+    suspend fun getFavorites(accountId: String = BuildConfig.TMDB_ACCOUNT_ID): MoviesApiDataResponse
 
     companion object {
         const val AUTHORIZATION_HEADER = "Authorization"
@@ -49,16 +28,17 @@ interface RestApiService {
         const val ACCEPT = "accept"
 
         internal const val MEDIA_TYPE = "movie"
-        private const val NOW_PLAYING_URL = "movie/now_playing"
-        private const val POPULAR_URL = "movie/popular"
-        private const val TOP_RATED_URL = "movie/top_rated"
-        private const val UPCOMING_URL = "movie/upcoming"
-        private const val ADD_TO_FAVORITES_URL = "account/{account_id}/favorite"
-        private const val GET_FAVORITES_URL = "account/{account_id}/favorite/movies"
-        private const val ACCOUNT_ID = "account_id"
-        private const val LANGUAGE = "language"
-        private const val PT_BR = "pt-BR"
+        internal const val NOW_PLAYING_URL = "movie/now_playing"
+        internal const val POPULAR_URL = "movie/popular"
+        internal const val TOP_RATED_URL = "movie/top_rated"
+        internal const val UPCOMING_URL = "movie/upcoming"
+        internal const val LANGUAGE = "language"
+        internal const val PT_BR = "pt-BR"
 
         const val BASE_URL = "https://api.themoviedb.org/3/"
+
+        internal fun addToFavoritesUrl(accountId: String) = "account/$accountId/favorite"
+
+        internal fun favoritesUrl(accountId: String) = "account/$accountId/favorite/movies"
     }
 }

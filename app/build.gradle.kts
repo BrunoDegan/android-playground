@@ -31,7 +31,7 @@ dependencies {
 
     // Test dependencies
     testImplementation(libs.mockk)
-    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.ktor.client.mock)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.kotlinx.flow.test.tubine)
     testImplementation(testFixtures(project))
@@ -39,7 +39,8 @@ dependencies {
     testFixturesApi(libs.junit)
     testFixturesApi(libs.kotlinx.coroutines.test)
     testFixturesApi(libs.kotlinx.immutable.list)
-    testFixturesImplementation(libs.retrofit.gson.converter)
+    testFixturesImplementation(libs.gson)
+    testFixturesImplementation(libs.kotlinx.serialization.json)
     testFixturesImplementation(platform(libs.androidx.compose.bom))
     testFixturesImplementation(libs.androidx.ui)
 
@@ -56,11 +57,14 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     androidTestImplementation(testFixtures(project))
 
-    // Retrofit
-    implementation(libs.retrofit.core)
-    implementation(libs.retrofit.kotlin.serialization)
-    implementation(libs.retrofit.gson.converter)
-    implementation(libs.okhttp.logging)
+    // Ktor
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.gson)
 
     // Navigation 3
     implementation(libs.androidx.navigation3.runtime)
