@@ -31,7 +31,10 @@ import org.koin.core.annotation.Singleton
 @ComponentScan("com.brunodegan.androidplayground.base.network")
 class NetworkModule {
     @Singleton
-    fun provideRestClient(): KtorRestApiService = KtorRestApiService(createHttpClient(OkHttp.create()))
+    fun provideRestClient(): KtorRestApiService {
+        val okHttpclient = OkHttp.create()
+        return KtorRestApiService(createHttpClient(okHttpclient))
+    }
 
     companion object {
         private const val REQUEST_TIMEOUT_MS = 60_000L
@@ -39,7 +42,6 @@ class NetworkModule {
         // Engine is a parameter so tests exercise the exact production configuration with a MockEngine
         internal fun createHttpClient(engine: HttpClientEngine): HttpClient =
             HttpClient(engine) {
-                // 3xx must reach the status check in KtorRestApiService and become an error
                 followRedirects = false
 
                 install(ContentNegotiation) {
@@ -60,7 +62,7 @@ class NetworkModule {
                 install(Logging) {
                     logger = Logger.ANDROID
                     level = if (BuildConfig.DEBUG) LogLevel.BODY else LogLevel.NONE
-                    sanitizeHeader { it == HttpHeaders.Authorization }
+                    sanitizeHeader { it == HttpHeaders.Authorization || it == HttpHeaders.Cookie || it == HttpHeaders.AuthenticationInfo }
                 }
 
                 defaultRequest {
