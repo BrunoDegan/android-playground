@@ -6,13 +6,13 @@ import com.brunodegan.androidplayground.data.datasources.local.entities.AddToFav
 import com.brunodegan.androidplayground.data.datasources.local.entities.MoviesApiDataResponse
 
 interface RestApiService {
-    suspend fun fetchNowPlaying(language: String = PT_BR): MoviesApiDataResponse
+    suspend fun fetchNowPlaying(): MoviesApiDataResponse
 
-    suspend fun fetchPopular(language: String = PT_BR): MoviesApiDataResponse
+    suspend fun fetchPopular(): MoviesApiDataResponse
 
-    suspend fun fetchTopRated(language: String = PT_BR): MoviesApiDataResponse
+    suspend fun fetchTopRated(): MoviesApiDataResponse
 
-    suspend fun fetchUpcoming(language: String = PT_BR): MoviesApiDataResponse
+    suspend fun fetchUpcoming(): MoviesApiDataResponse
 
     suspend fun addToFavorites(
         accountId: String = BuildConfig.TMDB_ACCOUNT_ID,

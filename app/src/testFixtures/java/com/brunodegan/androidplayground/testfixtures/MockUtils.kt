@@ -14,7 +14,6 @@ import com.brunodegan.androidplayground.data.datasources.local.entities.TopRated
 import com.brunodegan.androidplayground.data.datasources.local.entities.UpcomingMoviesEntity
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 object MockUtils {
@@ -192,7 +191,7 @@ object MockUtils {
             statusCode = "200",
         )
 
-    inline fun <reified T> toJsonString(obj: T): String = Json { encodeDefaults = true }.encodeToString(obj)
+    inline fun <reified T> toJsonString(obj: T): String = Json.encodeToString(obj)
 
     fun <T> getResourceError(exception: Exception) = Resource.Error<T>(ErrorType.Generic(exception.message))
 }

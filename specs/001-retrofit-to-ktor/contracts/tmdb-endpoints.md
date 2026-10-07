@@ -6,13 +6,13 @@ Headers on every request: `accept: application/json`, `content-type: application
 
 | Operation | Method | Path | Query / body | Response |
 |-----------|--------|------|--------------|----------|
-| fetchNowPlaying | GET | `movie/now_playing` | `language` (default `pt-BR`) | MoviesApiDataResponse |
-| fetchPopular | GET | `movie/popular` | `language` (default `pt-BR`) | MoviesApiDataResponse |
-| fetchTopRated | GET | `movie/top_rated` | `language` (default `pt-BR`) | MoviesApiDataResponse |
-| fetchUpcoming | GET | `movie/upcoming` | `language` (default `pt-BR`) | MoviesApiDataResponse |
+| fetchNowPlaying | GET | `movie/now_playing` | `language=pt-BR` (fixed, not a caller parameter) | MoviesApiDataResponse |
+| fetchPopular | GET | `movie/popular` | `language=pt-BR` (fixed, not a caller parameter) | MoviesApiDataResponse |
+| fetchTopRated | GET | `movie/top_rated` | `language=pt-BR` (fixed, not a caller parameter) | MoviesApiDataResponse |
+| fetchUpcoming | GET | `movie/upcoming` | `language=pt-BR` (fixed, not a caller parameter) | MoviesApiDataResponse |
 | addToFavorites | POST | `account/{account_id}/favorite` | JSON body AddToFavoritesRequest; `account_id` default `BuildConfig.TMDB_ACCOUNT_ID` | AddToFavoritesApiResponse |
 | getFavorites | GET | `account/{account_id}/favorite/movies` | `account_id` default `BuildConfig.TMDB_ACCOUNT_ID` | MoviesApiDataResponse |
 
 ## Kotlin contract (unchanged)
 
-`RestApiService` keeps the same six `suspend` functions, parameter names, defaults and return types, plus the companion constants (`BASE_URL`, header names, `MEDIA_TYPE`). Only Retrofit annotations are removed. `getFavorites` and the four list calls send no body.
+`RestApiService` keeps the same six `suspend` functions, parameter names (except the removed `language` parameter on the four list calls), defaults and return types, plus the companion constants (`BASE_URL`, header names, `MEDIA_TYPE`). Only Retrofit annotations are removed. `getFavorites` and the four list calls send no body.

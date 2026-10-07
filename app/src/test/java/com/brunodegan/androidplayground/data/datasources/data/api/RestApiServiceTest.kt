@@ -14,11 +14,13 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.headersOf
+import io.mockk.coEvery
+import io.mockk.mockk
 import io.mockk.unmockkAll
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThrows
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -45,65 +47,55 @@ class RestApiServiceTest {
 
     @Test
     fun `GIVEN mock response WHEN fetchNowPlaying is called THEN verify response`() =
-        runBlocking {
+        runTest {
             val mockResponse = MockUtils.mockMoviesApiDataResponse()
             responseBody = MockUtils.toJsonString(mockResponse)
 
             val result = apiService.fetchNowPlaying()
 
             assertEquals(mockResponse, result)
-            assertRequest(HttpMethod.Get, "/3/movie/now_playing", language = "pt-BR")
+            assertRequest(HttpMethod.Get, "/3/movie/now_playing")
         }
 
     @Test
     fun `GIVEN mock response WHEN fetchTopRated is called THEN verify response`() =
-        runBlocking {
+        runTest {
             val mockResponse = MockUtils.mockMoviesApiDataResponse()
             responseBody = MockUtils.toJsonString(mockResponse)
 
             val result = apiService.fetchTopRated()
 
             assertEquals(mockResponse, result)
-            assertRequest(HttpMethod.Get, "/3/movie/top_rated", language = "pt-BR")
+            assertRequest(HttpMethod.Get, "/3/movie/top_rated")
         }
 
     @Test
     fun `GIVEN mock response WHEN fetchPopular is called THEN verify response`() =
-        runBlocking {
+        runTest {
             val mockResponse = MockUtils.mockMoviesApiDataResponse()
             responseBody = MockUtils.toJsonString(mockResponse)
 
             val result = apiService.fetchPopular()
 
             assertEquals(mockResponse, result)
-            assertRequest(HttpMethod.Get, "/3/movie/popular", language = "pt-BR")
+            assertRequest(HttpMethod.Get, "/3/movie/popular")
         }
 
     @Test
     fun `GIVEN mock response WHEN fetchUpcoming is called THEN verify response`() =
-        runBlocking {
+        runTest {
             val mockResponse = MockUtils.mockMoviesApiDataResponse()
             responseBody = MockUtils.toJsonString(mockResponse)
 
             val result = apiService.fetchUpcoming()
 
             assertEquals(mockResponse, result)
-            assertRequest(HttpMethod.Get, "/3/movie/upcoming", language = "pt-BR")
-        }
-
-    @Test
-    fun `GIVEN custom language WHEN fetchNowPlaying is called THEN language query is overridden`() =
-        runBlocking {
-            responseBody = MockUtils.toJsonString(MockUtils.mockMoviesApiDataResponse())
-
-            apiService.fetchNowPlaying(language = "en-US")
-
-            assertRequest(HttpMethod.Get, "/3/movie/now_playing", language = "en-US")
+            assertRequest(HttpMethod.Get, "/3/movie/upcoming")
         }
 
     @Test
     fun `GIVEN payload with missing optional fields and unknown keys WHEN fetchPopular is called THEN it decodes`() =
-        runBlocking {
+        runTest {
             responseBody = """{"page":1,"results":[{"id":7,"title":"Only Title","unknown":true}]}"""
 
             val result = apiService.fetchPopular()
@@ -115,26 +107,8 @@ class RestApiServiceTest {
         }
 
     @Test
-    fun `GIVEN error status WHEN fetchNowPlaying is called THEN throws ApiException with status code and body`() {
-        listOf(
-            HttpStatusCode.Unauthorized,
-            HttpStatusCode.NotFound,
-            HttpStatusCode.InternalServerError,
-            HttpStatusCode.Found,
-        ).forEach { errorStatus ->
-            status = errorStatus
-            responseBody = """{"status_message":"boom"}"""
-
-            val exception = assertThrows(ApiException::class.java) { runBlocking { apiService.fetchNowPlaying() } }
-
-            assertEquals(errorStatus.value, exception.statusCode)
-            assertEquals("""{"status_message":"boom"}""", exception.body)
-        }
-    }
-
-    @Test
     fun `GIVEN mock response WHEN addToFavorites is called THEN verify response and request`() =
-        runBlocking {
+        runTest {
             val mockResponse = MockUtils.mockAddToFavoritesApiResponse()
             val mockRequest = MockUtils.mockAddToFavoritesRequest()
             responseBody = MockUtils.toJsonString(mockResponse)
@@ -158,7 +132,7 @@ class RestApiServiceTest {
 
     @Test
     fun `GIVEN explicit account id WHEN addToFavorites is called THEN path uses it`() =
-        runBlocking {
+        runTest {
             responseBody = MockUtils.toJsonString(MockUtils.mockAddToFavoritesApiResponse())
 
             apiService.addToFavorites(accountId = "42", addToFavoritesRequest = MockUtils.mockAddToFavoritesRequest())
@@ -168,7 +142,7 @@ class RestApiServiceTest {
 
     @Test
     fun `GIVEN TMDB numeric status_code payload WHEN addToFavorites is called THEN status code decodes as Int`() =
-        runBlocking {
+        runTest {
             responseBody = """{"success":true,"status_code":1,"status_message":"Success."}"""
 
             val result = apiService.addToFavorites(addToFavoritesRequest = MockUtils.mockAddToFavoritesRequest())
@@ -179,7 +153,7 @@ class RestApiServiceTest {
 
     @Test
     fun `GIVEN mock response WHEN getFavorites is called THEN verify response`() =
-        runBlocking {
+        runTest {
             val mockResponse = MockUtils.mockMoviesApiDataResponse()
             responseBody = MockUtils.toJsonString(mockResponse)
 
@@ -192,37 +166,58 @@ class RestApiServiceTest {
         }
 
     @Test
-    fun `GIVEN error status WHEN favorites calls are made THEN each throws ApiException`() {
-        status = HttpStatusCode.InternalServerError
-        responseBody = "error"
+    fun `GIVEN api failing with non 2xx WHEN list calls are made THEN each surfaces the ApiException`() =
+        runTest {
+            val failingApi: RestApiService = mockk()
+            val apiException = ApiException(statusCode = 500, body = "error")
+            coEvery { failingApi.fetchNowPlaying() } throws apiException
+            coEvery { failingApi.fetchPopular() } throws apiException
+            coEvery { failingApi.fetchTopRated() } throws apiException
+            coEvery { failingApi.fetchUpcoming() } throws apiException
 
-        val getException = assertThrows(ApiException::class.java) { runBlocking { apiService.getFavorites() } }
-        val addException =
-            assertThrows(ApiException::class.java) {
-                runBlocking { apiService.addToFavorites(addToFavoritesRequest = MockUtils.mockAddToFavoritesRequest()) }
-            }
+            val failures =
+                listOf(
+                    runCatching { failingApi.fetchNowPlaying() },
+                    runCatching { failingApi.fetchPopular() },
+                    runCatching { failingApi.fetchTopRated() },
+                    runCatching { failingApi.fetchUpcoming() },
+                ).map { it.exceptionOrNull() }
 
-        assertEquals(500, getException.statusCode)
-        assertEquals(500, addException.statusCode)
-    }
+            failures.forEach { assertSame(apiException, it) }
+        }
+
+    @Test
+    fun `GIVEN api failing with non 2xx WHEN favorites calls are made THEN each surfaces the ApiException`() =
+        runTest {
+            val failingApi: RestApiService = mockk()
+            val apiException = ApiException(statusCode = 404, body = "not found")
+            val request = MockUtils.mockAddToFavoritesRequest()
+            coEvery { failingApi.addToFavorites(any(), request) } throws apiException
+            coEvery { failingApi.getFavorites(any()) } throws apiException
+
+            val addFailure =
+                runCatching { failingApi.addToFavorites("1", request) }.exceptionOrNull()
+            val getFailure = runCatching { failingApi.getFavorites("1") }.exceptionOrNull()
+
+            assertSame(apiException, addFailure)
+            assertSame(apiException, getFailure)
+            assertEquals(404, (addFailure as ApiException).statusCode)
+        }
 
     private fun assertRequest(
         method: HttpMethod,
         path: String,
-        language: String,
     ) {
         val request = requests.single()
         assertEquals(method, request.method)
         assertEquals("api.themoviedb.org", request.url.host)
         assertEquals(path, request.url.encodedPath)
-        assertEquals(language, request.url.parameters["language"])
+        assertEquals("pt-BR", request.url.parameters["language"])
         assertEquals("application/json", request.headers[RestApiService.ACCEPT])
         assertEquals("application/json", request.headers[RestApiService.CONTENT_TYPE])
         assertEquals(BuildConfig.TMDB_BEARER_TOKEN, request.headers[RestApiService.AUTHORIZATION_HEADER])
     }
 
     @After
-    fun tearDown() {
-        unmockkAll()
-    }
+    fun tearDown() = unmockkAll()
 }

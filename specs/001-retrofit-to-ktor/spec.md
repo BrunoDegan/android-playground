@@ -69,7 +69,7 @@ A developer working on the project finds one HTTP client stack. The old client d
 
 ### Functional Requirements
 
-- **FR-001**: The app MUST fetch Now Playing, Popular, Top Rated and Upcoming movie lists with identical request URLs, query parameters and default language (pt-BR) as today.
+- **FR-001**: The app MUST fetch Now Playing, Popular, Top Rated and Upcoming movie lists with identical request URLs, query parameters and a fixed language (pt-BR) as today; language is not a caller parameter.
 - **FR-002**: The app MUST add a movie to favorites and fetch favorites for the configured account with identical URLs, method and request body as today.
 - **FR-003**: Every request MUST send Accept, Content-Type and Authorization headers as today.
 - **FR-003a**: Any non-2xx response MUST surface to callers as an error carrying the status code.
