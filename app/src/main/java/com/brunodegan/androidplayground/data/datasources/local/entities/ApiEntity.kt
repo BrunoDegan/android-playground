@@ -2,38 +2,38 @@ package com.brunodegan.androidplayground.data.datasources.local.entities
 
 import android.os.Parcelable
 import com.brunodegan.androidplayground.data.api.RestApiService.Companion.MEDIA_TYPE
-import com.google.gson.annotations.SerializedName
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.SerialName
 
 @Parcelize
 data class MoviesApiDataResponse(
-    @SerializedName("results") val results: List<Movies>,
+    @SerialName("results") val results: List<Movies>,
 ) : ApiData()
 
 @Parcelize
 data class Movies(
-    @SerializedName("id") val id: Int?,
-    @SerializedName("title") val title: String?,
-    @SerializedName("poster_path") val posterPath: String?,
-    @SerializedName("overview") val overview: String?,
-    @SerializedName("original_language") val originalLanguage: String?,
-    @SerializedName("popularity") val popularity: Double?,
-    @SerializedName("release_date") val releaseDate: String?,
-    @SerializedName("vote_average") val voteAverage: Double?,
+    @SerialName("id") val id: Int?,
+    @SerialName("title") val title: String?,
+    @SerialName("poster_path") val posterPath: String?,
+    @SerialName("overview") val overview: String?,
+    @SerialName("original_language") val originalLanguage: String?,
+    @SerialName("popularity") val popularity: Double?,
+    @SerialName("release_date") val releaseDate: String?,
+    @SerialName("vote_average") val voteAverage: Double?,
 ) : ApiData()
 
 @Parcelize
 data class AddToFavoritesApiResponse(
-    @SerializedName("success") val success: Boolean,
-    @SerializedName("status_code") val statusCode: String,
-    @SerializedName("status_message") val statusMessage: String,
+    @SerialName("success") val success: Boolean,
+    @SerialName("status_code") val statusCode: String,
+    @SerialName("status_message") val statusMessage: String,
 ) : ApiData()
 
 @Parcelize
 data class AddToFavoritesRequest(
-    @SerializedName("media_type") val mediaType: String = MEDIA_TYPE,
-    @SerializedName("media_id") val mediaId: Int,
-    @SerializedName("favorite") val favorite: Boolean,
+    @SerialName("media_type") val mediaType: String = MEDIA_TYPE,
+    @SerialName("media_id") val mediaId: Int,
+    @SerialName("favorite") val favorite: Boolean,
 ) : ApiData()
 
 @Parcelize
