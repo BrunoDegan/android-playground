@@ -1,1 +1,5 @@
 /build
+.claude/*
+.specify*
+.kotlin/*
+docs/superpowers/plan/*
