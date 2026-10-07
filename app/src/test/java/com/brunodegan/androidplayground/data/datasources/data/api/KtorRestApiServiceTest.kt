@@ -134,9 +134,15 @@ class KtorRestApiServiceTest {
         runTest {
             responseBody = MockUtils.toJsonString(MockUtils.mockAddToFavoritesApiResponse())
 
-            apiService.addToFavorites(accountId = "42", addToFavoritesRequest = MockUtils.mockAddToFavoritesRequest())
+            apiService.addToFavorites(
+                accountId = BuildConfig.TMDB_ACCOUNT_ID,
+                addToFavoritesRequest = MockUtils.mockAddToFavoritesRequest(),
+            )
 
-            assertEquals("/3/account/42/favorite", requests.single().url.encodedPath)
+            assertEquals(
+                "/3/account/${BuildConfig.TMDB_ACCOUNT_ID}/favorite",
+                requests.single().url.encodedPath,
+            )
         }
 
     @Test

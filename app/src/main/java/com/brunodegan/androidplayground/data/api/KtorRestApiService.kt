@@ -32,13 +32,13 @@ class KtorRestApiService(
         addToFavoritesRequest: AddToFavoritesRequest,
     ): AddToFavoritesApiResponse =
         client
-            .post(addToFavoritesUrl(accountId)) {
+            .post(FAVORITE_MOVIE_URL.format(accountId)) {
                 contentType(ContentType.Application.Json)
                 setBody(addToFavoritesRequest)
             }.decode()
 
     suspend fun getFavorites(accountId: String = BuildConfig.TMDB_ACCOUNT_ID): MoviesApiDataResponse =
-        client.get(favoritesUrl(accountId)).decode()
+        client.get(FAVORITE_MOVIE_URL_LIST.format(accountId)).decode()
 
     private suspend fun getMovies(path: String): MoviesApiDataResponse = client.get(path) { parameter(LANGUAGE, PT_BR) }.decode()
 
@@ -61,8 +61,8 @@ class KtorRestApiService(
         private const val LANGUAGE = "language"
         private const val PT_BR = "pt-BR"
 
-        private fun addToFavoritesUrl(accountId: String) = "account/$accountId/favorite"
-
-        private fun favoritesUrl(accountId: String) = "account/$accountId/favorite/movies"
+        private const val FAVORITE_MOVIE_URL = "account/${BuildConfig.TMDB_ACCOUNT_ID}/favorite"
+        private const val FAVORITE_MOVIE_URL_LIST =
+            "account/${BuildConfig.TMDB_ACCOUNT_ID}/favorite/movies"
     }
 }
