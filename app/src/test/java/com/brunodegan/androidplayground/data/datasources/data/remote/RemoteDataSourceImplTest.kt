@@ -1,6 +1,6 @@
 package com.brunodegan.androidplayground.data.datasources.data.remote
 
-import com.brunodegan.androidplayground.data.api.RestApiService
+import com.brunodegan.androidplayground.data.api.KtorRestApiService
 import com.brunodegan.androidplayground.data.datasources.remote.RemoteDataSource
 import com.brunodegan.androidplayground.data.datasources.remote.RemoteDataSourceImpl
 import com.brunodegan.androidplayground.testfixtures.MockUtils
@@ -20,7 +20,7 @@ class RemoteDataSourceImplTest {
     @get:Rule
     val mainDispatcher = TestDispatcherRule()
 
-    private val restApiService: RestApiService = mockk(relaxed = true)
+    private val restApiService: KtorRestApiService = mockk(relaxed = true)
     private lateinit var remoteDataSource: RemoteDataSource
 
     @Before

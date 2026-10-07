@@ -4,7 +4,6 @@ import com.brunodegan.androidplayground.BuildConfig
 import com.brunodegan.androidplayground.base.network.NetworkModule
 import com.brunodegan.androidplayground.data.api.ApiException
 import com.brunodegan.androidplayground.data.api.KtorRestApiService
-import com.brunodegan.androidplayground.data.api.RestApiService
 import com.brunodegan.androidplayground.testfixtures.MockUtils
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -25,11 +24,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-class RestApiServiceTest {
+class KtorRestApiServiceTest {
     private val requests = mutableListOf<HttpRequestData>()
     private var status = HttpStatusCode.OK
     private var responseBody = ""
-    private lateinit var apiService: RestApiService
+    private lateinit var apiService: KtorRestApiService
 
     @Before
     fun setup() {
@@ -168,7 +167,7 @@ class RestApiServiceTest {
     @Test
     fun `GIVEN api failing with non 2xx WHEN list calls are made THEN each surfaces the ApiException`() =
         runTest {
-            val failingApi: RestApiService = mockk()
+            val failingApi: KtorRestApiService = mockk()
             val apiException = ApiException(statusCode = 500, body = "error")
             coEvery { failingApi.fetchNowPlaying() } throws apiException
             coEvery { failingApi.fetchPopular() } throws apiException
@@ -189,7 +188,7 @@ class RestApiServiceTest {
     @Test
     fun `GIVEN api failing with non 2xx WHEN favorites calls are made THEN each surfaces the ApiException`() =
         runTest {
-            val failingApi: RestApiService = mockk()
+            val failingApi: KtorRestApiService = mockk()
             val apiException = ApiException(statusCode = 404, body = "not found")
             val request = MockUtils.mockAddToFavoritesRequest()
             coEvery { failingApi.addToFavorites(any(), request) } throws apiException
@@ -213,9 +212,9 @@ class RestApiServiceTest {
         assertEquals("api.themoviedb.org", request.url.host)
         assertEquals(path, request.url.encodedPath)
         assertEquals("pt-BR", request.url.parameters["language"])
-        assertEquals("application/json", request.headers[RestApiService.ACCEPT])
-        assertEquals("application/json", request.headers[RestApiService.CONTENT_TYPE])
-        assertEquals(BuildConfig.TMDB_BEARER_TOKEN, request.headers[RestApiService.AUTHORIZATION_HEADER])
+        assertEquals("application/json", request.headers[KtorRestApiService.ACCEPT])
+        assertEquals("application/json", request.headers[KtorRestApiService.CONTENT_TYPE])
+        assertEquals(BuildConfig.TMDB_BEARER_TOKEN, request.headers[KtorRestApiService.AUTHORIZATION_HEADER])
     }
 
     @After

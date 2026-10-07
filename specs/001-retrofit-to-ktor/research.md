@@ -2,7 +2,7 @@
 
 ## R1 — Ktor directly vs Ktorfit
 
-- **Decision**: Ktor client directly; keep `RestApiService` interface and add one hand-written implementation.
+- **Decision**: Ktor client directly; hand-written `KtorRestApiService` class, injected directly (the `RestApiService` interface was dropped as unnecessary).
 - **Rationale**: Only 6 endpoints, so hand-written calls are ~40 lines. Ktorfit needs a KSP plugin and compiler-plugin version coupling (supports Kotlin >=2.2, KSP >=2.0.2) on top of the Koin compiler plugin and Kotlin 2.4.20, which adds build risk for little code saved. Preserving the interface keeps `RemoteDataSourceImpl` and its MockK test unchanged.
 - **Alternatives**: Ktorfit 2.7.5 (annotation interface nearly identical to Retrofit; reconsider if endpoints grow a lot); keeping Retrofit (rejected, goal of the feature).
 

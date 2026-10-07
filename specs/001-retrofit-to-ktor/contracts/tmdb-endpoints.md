@@ -15,4 +15,4 @@ Headers on every request: `accept: application/json`, `content-type: application
 
 ## Kotlin contract (unchanged)
 
-`RestApiService` keeps the same six `suspend` functions, parameter names (except the removed `language` parameter on the four list calls), defaults and return types, plus the companion constants (`BASE_URL`, header names, `MEDIA_TYPE`). Only Retrofit annotations are removed. `getFavorites` and the four list calls send no body.
+`KtorRestApiService` (the former `RestApiService` interface was removed) keeps the same six `suspend` functions, parameter names (except the removed `language` parameter on the four list calls), defaults and return types, plus the companion constants (`BASE_URL`, header names, `MEDIA_TYPE`). Only Retrofit annotations are removed. `getFavorites` and the four list calls send no body.

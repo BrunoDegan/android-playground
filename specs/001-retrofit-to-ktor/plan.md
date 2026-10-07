@@ -6,7 +6,7 @@
 
 ## Summary
 
-Replace Retrofit + OkHttp-interceptor wiring with a Ktor `HttpClient` (OkHttp engine) behind the existing `RestApiService` interface. JSON moves from Gson to kotlinx.serialization (plugin already in the version catalog). Ktorfit is NOT adopted (see [research.md](research.md)). Callers (`RemoteDataSourceImpl`, repositories, view models) stay untouched because the interface is preserved; a new `KtorRestApiService` implements it.
+Replace Retrofit + OkHttp-interceptor wiring with a Ktor `HttpClient` (OkHttp engine) in a single `KtorRestApiService` class (no interface). JSON moves from Gson to kotlinx.serialization (plugin already in the version catalog). Ktorfit is NOT adopted (see [research.md](research.md)). Callers (`RemoteDataSourceImpl`, repositories, view models) stay untouched because the interface is preserved; a new `KtorRestApiService` implements it.
 
 ## Technical Context
 
@@ -53,25 +53,24 @@ specs/001-retrofit-to-ktor/
 gradle/libs.versions.toml                      # add ktor + serialization-json; remove retrofit, gson converter, okhttp-logging/mockwebserver
 app/build.gradle.kts                           # swap dependencies, apply kotlinSerialization if not in build-logic
 app/src/main/java/com/brunodegan/androidplayground/
-├── base/network/NetworkModule.kt              # build HttpClient + provide RestApiService
-├── data/api/RestApiService.kt                 # keep interface, drop Retrofit annotations, keep constants
-├── data/api/KtorRestApiService.kt             # NEW implementation + explicit non-2xx handling
+├── base/network/NetworkModule.kt              # build HttpClient + provide KtorRestApiService
+├── data/api/KtorRestApiService.kt             # the HTTP client class (no interface); owns URL/header constants; explicit non-2xx handling
 ├── data/api/ApiException.kt                   # NEW: status code + body for non-2xx
 └── data/datasources/local/entities/ApiEntity.kt  # @SerializedName -> @Serializable/@SerialName
-app/src/test/.../data/api/RestApiServiceTest.kt   # MockEngine based
+app/src/test/.../data/api/KtorRestApiServiceTest.kt   # MockEngine based
 app/src/testFixtures/.../MockUtils.kt             # toJsonString via kotlinx Json
 app/proguard-rules / consumer rules               # serialization keep rules if needed
 ```
 
-**Structure Decision**: Single existing `app` module; no new modules. Interface kept so `RemoteDataSourceImplTest` (MockK on `RestApiService`) needs no change.
+**Structure Decision**: Single existing `app` module; no new modules. The `RestApiService` interface was dropped (decision 2026-10-07): `KtorRestApiService` is the single HTTP client class and is injected directly; `RemoteDataSourceImplTest` mocks it with MockK.
 
 ## Approach (ordered)
 
 1. Add catalog entries and dependencies; keep Retrofit temporarily so the build stays green.
 2. Annotate models with `@Serializable` + `@SerialName`; keep `@Parcelize`. Gson is still used by Room converter, so keep it as a direct dependency.
-3. Add `KtorRestApiService` implementing `RestApiService`; remove Retrofit annotations from the interface.
+3. Create `KtorRestApiService` (no interface) with the six calls and URL/header constants; remove the `RestApiService` interface.
 4. Rewrite `NetworkModule`: `HttpClient(OkHttp)` with `defaultRequest` (base URL + headers), `ContentNegotiation(Json { ignoreUnknownKeys = true })`, `HttpTimeout` 60 s, `Logging` at BODY in debug / NONE in release. Single instance via Koin `@Singleton`. No `expectSuccess`; status handling is explicit in `KtorRestApiService` (one private helper that checks `isSuccess()` and throws `ApiException`, then decodes the body).
-5. Migrate `RestApiServiceTest` to `MockEngine`; assert URL, query, method, headers, body per endpoint plus error paths: 4xx, 5xx and a 3xx must each throw `ApiException` with the status code.
+5. Migrate `RestApiServiceTest` (renamed `KtorRestApiServiceTest`) to `MockEngine`; assert URL, query, method, headers, body per endpoint plus error paths: 4xx, 5xx and a 3xx must each throw `ApiException` with the status code.
 6. Update `MockUtils.toJsonString` to kotlinx.
 7. Remove Retrofit, okhttp-logging, mockwebserver, converter deps and catalog entries; grep for zero leftovers.
 8. Verify: unit tests, `lintDebug`, ktlint, `assembleRelease` with shrinking, manual smoke of 4 lists + favorites.

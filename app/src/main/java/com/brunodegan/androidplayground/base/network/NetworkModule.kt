@@ -2,12 +2,11 @@ package com.brunodegan.androidplayground.base.network
 
 import com.brunodegan.androidplayground.BuildConfig
 import com.brunodegan.androidplayground.data.api.KtorRestApiService
-import com.brunodegan.androidplayground.data.api.RestApiService
-import com.brunodegan.androidplayground.data.api.RestApiService.Companion.ACCEPT
-import com.brunodegan.androidplayground.data.api.RestApiService.Companion.APPLICATION_JSON
-import com.brunodegan.androidplayground.data.api.RestApiService.Companion.AUTHORIZATION_HEADER
-import com.brunodegan.androidplayground.data.api.RestApiService.Companion.BASE_URL
-import com.brunodegan.androidplayground.data.api.RestApiService.Companion.CONTENT_TYPE
+import com.brunodegan.androidplayground.data.api.KtorRestApiService.Companion.ACCEPT
+import com.brunodegan.androidplayground.data.api.KtorRestApiService.Companion.APPLICATION_JSON
+import com.brunodegan.androidplayground.data.api.KtorRestApiService.Companion.AUTHORIZATION_HEADER
+import com.brunodegan.androidplayground.data.api.KtorRestApiService.Companion.BASE_URL
+import com.brunodegan.androidplayground.data.api.KtorRestApiService.Companion.CONTENT_TYPE
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -32,7 +31,7 @@ import org.koin.core.annotation.Singleton
 @ComponentScan("com.brunodegan.androidplayground.base.network")
 class NetworkModule {
     @Singleton
-    fun provideRestClient(): RestApiService = KtorRestApiService(createHttpClient(OkHttp.create()))
+    fun provideRestClient(): KtorRestApiService = KtorRestApiService(createHttpClient(OkHttp.create()))
 
     companion object {
         private const val REQUEST_TIMEOUT_MS = 60_000L

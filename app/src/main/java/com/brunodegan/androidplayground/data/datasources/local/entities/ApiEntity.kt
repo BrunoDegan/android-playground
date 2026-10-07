@@ -1,7 +1,7 @@
 package com.brunodegan.androidplayground.data.datasources.local.entities
 
 import android.os.Parcelable
-import com.brunodegan.androidplayground.data.api.RestApiService.Companion.MEDIA_TYPE
+import com.brunodegan.androidplayground.data.api.KtorRestApiService.Companion.MEDIA_TYPE
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
