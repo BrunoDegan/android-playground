@@ -8,16 +8,6 @@ extensions.configure<ApplicationExtension> {
     namespace = "com.brunodegan.androidplayground"
 }
 
-kotlin {
-    ktlint {
-        android.set(true)
-        outputToConsole.set(true)
-        ignoreFailures.set(false)
-        outputColorName.set("RED")
-        baseline.set(file("config/ktlint/baseline.xml"))
-    }
-}
-
 dependencies {
     // AndroidX dependencies
     implementation(platform(libs.androidx.compose.bom))

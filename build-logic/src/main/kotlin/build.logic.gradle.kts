@@ -27,6 +27,16 @@ android {
     testFixtures.enable = true
 }
 
+kotlin {
+    ktlint {
+        android.set(true)
+        outputToConsole.set(true)
+        ignoreFailures.set(false)
+        outputColorName.set("RED")
+        baseline.set(file("config/ktlint/baseline.xml"))
+    }
+}
+
 extensions.configure<ApplicationExtension> {
     compileSdk = 37
 
