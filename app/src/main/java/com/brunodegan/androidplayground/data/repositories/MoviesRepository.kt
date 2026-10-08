@@ -7,6 +7,7 @@ import com.brunodegan.androidplayground.data.datasources.local.entities.NowPlayi
 import com.brunodegan.androidplayground.data.datasources.local.entities.PopularMoviesEntity
 import com.brunodegan.androidplayground.data.datasources.local.entities.TopRatedMoviesEntity
 import com.brunodegan.androidplayground.data.datasources.local.entities.UpcomingMoviesEntity
+import com.brunodegan.androidplayground.data.sync.SyncResult
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.Flow
 
@@ -24,4 +25,6 @@ interface MoviesRepository {
     fun removeFavorite(id: Int): Flow<Resource<AddToFavoriteMoviesData>>
 
     fun getFavorites(): Flow<Resource<ImmutableList<FavoriteMoviesEntity>>>
+
+    suspend fun refreshAll(): SyncResult
 }
