@@ -338,23 +338,32 @@ class MoviesRepositoryImpl(
                         fetch = { upcomingMoviesDataMapper.map(remoteDataSource.fetchUpcoming()) },
                         save = localDataSource::saveUpcoming,
                     ),
+                SyncCategory.FAVORITES to
+                    refresh(
+                        fetch = { favoritesDataMapper.map(remoteDataSource.fetchFavorites()) },
+                        save = localDataSource::saveFavorites,
+                    ),
             ),
         )
 
-    // An empty remote list is a failure so it never wipes valid local data; favorites are never touched.
     private suspend fun <T> refresh(
         fetch: suspend () -> List<T>,
         save: (List<T>) -> Unit,
     ): SyncOutcome =
         try {
             val movies = fetch()
-            check(movies.isNotEmpty()) { "Empty movie list" }
-            save(movies)
-            SyncOutcome.Success(movies.size)
+            if (movies.isNullOrEmpty().not()) {
+                save(movies)
+                SyncOutcome.Success(movies.size)
+            } else {
+                SyncOutcome.Failure("No data fetched from remote source")
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            e.message.takeIf { it.isNullOrEmpty().not() }?.let { metricsEventsDispatcher.onEvent(it) }
+            e.message
+                .takeIf { it.isNullOrEmpty().not() }
+                ?.let { metricsEventsDispatcher.onEvent(it) }
             SyncOutcome.Failure(e.message)
         }
 }

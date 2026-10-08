@@ -11,7 +11,7 @@ import androidx.work.WorkManager
 import org.koin.core.annotation.Single
 import java.util.concurrent.TimeUnit
 
-const val SYNC_WORK_NAME = "movie_sync"
+const val SYNC_WORK_ID = "movie_sync"
 
 @Single
 class MovieSyncScheduler(
@@ -33,6 +33,10 @@ class MovieSyncScheduler(
                 .build()
         WorkManager
             .getInstance(context)
-            .enqueueUniquePeriodicWork(SYNC_WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
+            .enqueueUniquePeriodicWork(
+                SYNC_WORK_ID,
+                ExistingPeriodicWorkPolicy.UPDATE,
+                request,
+            )
     }
 }

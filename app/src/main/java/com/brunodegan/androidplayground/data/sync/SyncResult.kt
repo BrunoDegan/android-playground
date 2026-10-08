@@ -1,6 +1,6 @@
 package com.brunodegan.androidplayground.data.sync
 
-enum class SyncCategory { NOW_PLAYING, POPULAR, TOP_RATED, UPCOMING }
+enum class SyncCategory { NOW_PLAYING, POPULAR, TOP_RATED, UPCOMING, FAVORITES }
 
 sealed interface SyncOutcome {
     data class Success(

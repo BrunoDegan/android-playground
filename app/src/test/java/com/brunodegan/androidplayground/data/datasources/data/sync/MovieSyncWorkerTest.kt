@@ -42,10 +42,10 @@ class MovieSyncWorkerTest {
         }
 
     @Test
-    fun `GIVEN partial failure WHEN doWork THEN success`() =
+    fun `GIVEN partial failure WHEN doWork THEN fails`() =
         runTest {
             coEvery { repository.refreshAll() } returns partial
-            assertEquals(Result.success(), worker(0).doWork())
+            assertEquals(Result.Retry(), worker(0).doWork())
         }
 
     @Test

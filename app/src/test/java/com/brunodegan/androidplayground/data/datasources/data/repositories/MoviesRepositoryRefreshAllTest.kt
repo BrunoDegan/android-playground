@@ -12,6 +12,8 @@ import com.brunodegan.androidplayground.data.metrics.Metrics
 import com.brunodegan.androidplayground.data.repositories.MoviesRepositoryImpl
 import com.brunodegan.androidplayground.data.sync.SyncCategory
 import com.brunodegan.androidplayground.data.sync.SyncOutcome
+import com.brunodegan.androidplayground.testfixtures.MockUtils.mockAddToFavoriteMoviesData
+import com.brunodegan.androidplayground.testfixtures.MockUtils.mockFavoriteMoviesEntity
 import com.brunodegan.androidplayground.testfixtures.MockUtils.mockMoviesApiDataResponse
 import com.brunodegan.androidplayground.testfixtures.MockUtils.mockNowPlayingMoviesEntity
 import com.brunodegan.androidplayground.testfixtures.MockUtils.mockPopularMoviesEntity
@@ -35,7 +37,10 @@ class MoviesRepositoryRefreshAllTest {
     private val remoteDataSource: RemoteDataSource = mockk()
     private val topRatedMapper: TopRatedDataMapper = mockk()
     private val upcomingMapper: UpcomingDataMapper = mockk()
+    private val addOrRemoveToFavoritesResponseDataMapper: AddOrRemoveToFavoritesResponseDataMapper =
+        mockk()
     private val popularMapper: PopularDataMapper = mockk()
+    private val favoritesMapper: FavoritesDataMapper = mockk()
     private val nowPlayingMapper: NowPlayingDataMapper = mockk()
     private val metrics: Metrics = mockk()
     private val apiData = mockMoviesApiDataResponse()
@@ -46,8 +51,8 @@ class MoviesRepositoryRefreshAllTest {
     fun setUp() {
         repository =
             MoviesRepositoryImpl(
-                addOrRemoveToFavoritesResponseDataMapper = mockk<AddOrRemoveToFavoritesResponseDataMapper>(),
-                favoritesDataMapper = mockk<FavoritesDataMapper>(),
+                addOrRemoveToFavoritesResponseDataMapper = addOrRemoveToFavoritesResponseDataMapper,
+                favoritesDataMapper = favoritesMapper,
                 nowPlayingMoviesDataMapper = nowPlayingMapper,
                 popularMoviesDataMapper = popularMapper,
                 topRatedMoviesDataMapper = topRatedMapper,
@@ -64,18 +69,22 @@ class MoviesRepositoryRefreshAllTest {
         coEvery { remoteDataSource.fetchPopular() } returns apiData
         coEvery { remoteDataSource.fetchTopRated() } returns apiData
         coEvery { remoteDataSource.fetchUpcoming() } returns apiData
+        coEvery { remoteDataSource.fetchFavorites() } returns apiData
         every { nowPlayingMapper.map(any()) } returns mockNowPlayingMoviesEntity()
         every { popularMapper.map(any()) } returns mockPopularMoviesEntity()
         every { topRatedMapper.map(any()) } returns mockTopRatedMoviesEntity()
         every { upcomingMapper.map(any()) } returns mockUpcomingMoviesEntity()
+        every { favoritesMapper.map(any()) } returns mockFavoriteMoviesEntity()
+        every { addOrRemoveToFavoritesResponseDataMapper.map(any()) } returns mockAddToFavoriteMoviesData()
         justRun { localDataSource.saveNowPlaying(any()) }
         justRun { localDataSource.savePopular(any()) }
         justRun { localDataSource.saveTopRated(any()) }
         justRun { localDataSource.saveUpcoming(any()) }
+        justRun { localDataSource.saveFavorites(any()) }
     }
 
     @Test
-    fun `GIVEN all remote succeed WHEN refreshAll THEN all four lists saved and favorites untouched`() =
+    fun `GIVEN all remote succeed WHEN refreshAll THEN all lists and favorites saved`() =
         runTest {
             stubAllRemoteSuccess()
 
@@ -88,35 +97,36 @@ class MoviesRepositoryRefreshAllTest {
             verify(exactly = 1) { localDataSource.savePopular(any()) }
             verify(exactly = 1) { localDataSource.saveTopRated(any()) }
             verify(exactly = 1) { localDataSource.saveUpcoming(any()) }
-            coVerify(exactly = 0) { remoteDataSource.fetchFavorites() }
-            verify(exactly = 0) { localDataSource.saveFavorites(any()) }
+            coVerify(exactly = 1) { remoteDataSource.fetchFavorites() }
+            verify(exactly = 1) { localDataSource.saveFavorites(any()) }
             coVerify(exactly = 0) { localDataSource.removeFavoriteMovie(any()) }
         }
 
     @Test
-    fun `GIVEN one remote throws WHEN refreshAll THEN other lists saved and that one fails`() =
+    fun `GIVEN one remote throws WHEN refreshAll THEN other lists are still saved and hasFetchingFailure is true`() =
         runTest {
             stubAllRemoteSuccess()
-            coEvery { remoteDataSource.fetchPopular() } throws IllegalStateException("boom")
+            coEvery { remoteDataSource.fetchPopular() } throws IllegalStateException("error")
 
             val result = repository.refreshAll()
 
-            assertEquals(SyncOutcome.Failure("boom"), result.outcomes[SyncCategory.POPULAR])
-            assertTrue(result.outcomes[SyncCategory.NOW_PLAYING] is SyncOutcome.Success)
-            assertFalse(result.hasFetchingFailure)
+            assertEquals(SyncOutcome.Failure("error"), result.outcomes[SyncCategory.POPULAR])
+            assertTrue(result.hasFetchingFailure)
             verify(exactly = 0) { localDataSource.savePopular(any()) }
             verify(exactly = 1) { localDataSource.saveNowPlaying(any()) }
             verify(exactly = 1) { localDataSource.saveTopRated(any()) }
             verify(exactly = 1) { localDataSource.saveUpcoming(any()) }
+            verify(exactly = 1) { localDataSource.saveFavorites(any()) }
         }
 
     @Test
-    fun `GIVEN all remote throw WHEN refreshAll THEN allFailed and nothing saved`() =
+    fun `GIVEN all remote throw WHEN refreshAll THEN hasFetchingFailure and nothing saved`() =
         runTest {
             coEvery { remoteDataSource.fetchNowPlaying() } throws RuntimeException("x")
             coEvery { remoteDataSource.fetchPopular() } throws RuntimeException("x")
             coEvery { remoteDataSource.fetchTopRated() } throws RuntimeException("x")
             coEvery { remoteDataSource.fetchUpcoming() } throws RuntimeException("x")
+            coEvery { remoteDataSource.fetchFavorites() } throws RuntimeException("x")
 
             val result = repository.refreshAll()
 
@@ -125,6 +135,7 @@ class MoviesRepositoryRefreshAllTest {
             verify(exactly = 0) { localDataSource.savePopular(any()) }
             verify(exactly = 0) { localDataSource.saveTopRated(any()) }
             verify(exactly = 0) { localDataSource.saveUpcoming(any()) }
+            verify(exactly = 0) { localDataSource.saveFavorites(any()) }
         }
 
     @Test

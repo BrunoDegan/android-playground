@@ -24,13 +24,13 @@ class MovieSyncSchedulerTest {
     }
 
     @Test
-    fun scheduleTwiceKeepsSingleEnqueuedPeriodicWork() {
+    fun `GIVEN when workmanager WHEN it schedules twice workload THEN keeps single enqueue periodic work`() {
         val scheduler = MovieSyncScheduler(context)
 
         scheduler.schedule()
         scheduler.schedule()
 
-        val infos = WorkManager.getInstance(context).getWorkInfosForUniqueWork(SYNC_WORK_NAME).get()
+        val infos = WorkManager.getInstance(context).getWorkInfosForUniqueWork(SYNC_WORK_ID).get()
         assertEquals(1, infos.size)
         assertEquals(WorkInfo.State.ENQUEUED, infos.single().state)
         assertEquals(NetworkType.CONNECTED, infos.single().constraints.requiredNetworkType)
