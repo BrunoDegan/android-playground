@@ -83,7 +83,7 @@ class MoviesRepositoryRefreshAllTest {
 
             assertEquals(SyncCategory.entries.toSet(), result.outcomes.keys)
             assertTrue(result.outcomes.values.all { it is SyncOutcome.Success })
-            assertFalse(result.allFailed)
+            assertFalse(result.hasFetchingFailure)
             verify(exactly = 1) { localDataSource.saveNowPlaying(any()) }
             verify(exactly = 1) { localDataSource.savePopular(any()) }
             verify(exactly = 1) { localDataSource.saveTopRated(any()) }
@@ -103,7 +103,7 @@ class MoviesRepositoryRefreshAllTest {
 
             assertEquals(SyncOutcome.Failure("boom"), result.outcomes[SyncCategory.POPULAR])
             assertTrue(result.outcomes[SyncCategory.NOW_PLAYING] is SyncOutcome.Success)
-            assertFalse(result.allFailed)
+            assertFalse(result.hasFetchingFailure)
             verify(exactly = 0) { localDataSource.savePopular(any()) }
             verify(exactly = 1) { localDataSource.saveNowPlaying(any()) }
             verify(exactly = 1) { localDataSource.saveTopRated(any()) }
@@ -120,7 +120,7 @@ class MoviesRepositoryRefreshAllTest {
 
             val result = repository.refreshAll()
 
-            assertTrue(result.allFailed)
+            assertTrue(result.hasFetchingFailure)
             verify(exactly = 0) { localDataSource.saveNowPlaying(any()) }
             verify(exactly = 0) { localDataSource.savePopular(any()) }
             verify(exactly = 0) { localDataSource.saveTopRated(any()) }

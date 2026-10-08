@@ -18,7 +18,7 @@ class MovieSyncWorker(
     override suspend fun doWork(): Result {
         val allFailed =
             try {
-                repository.refreshAll().allFailed
+                repository.refreshAll().hasFetchingFailure
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
