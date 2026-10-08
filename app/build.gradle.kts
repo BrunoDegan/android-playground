@@ -31,6 +31,7 @@ dependencies {
 
     // Test dependencies
     testImplementation(libs.mockk)
+    testImplementation(libs.androidx.work.testing)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.kotlinx.flow.test.tubine)
@@ -56,6 +57,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.ui.test.junit4)
     androidTestImplementation(testFixtures(project))
+    androidTestImplementation(libs.androidx.work.testing)
 
     // Ktor
     implementation(libs.ktor.client.core)
@@ -79,6 +81,10 @@ dependencies {
     implementation(libs.koin.test)
     implementation(libs.koin.annotations)
     implementation(libs.koin.compose)
+    implementation(libs.koin.androidx.workmanager)
+
+    // WorkManager
+    implementation(libs.androidx.work.runtime)
     implementation(libs.koin.compose.viewmodel)
     implementation(libs.koin.compose.viewmodel.navigation)
 

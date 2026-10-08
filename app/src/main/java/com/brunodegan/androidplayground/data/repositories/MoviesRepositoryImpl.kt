@@ -20,8 +20,12 @@ import com.brunodegan.androidplayground.data.mappers.PopularDataMapper
 import com.brunodegan.androidplayground.data.mappers.TopRatedDataMapper
 import com.brunodegan.androidplayground.data.mappers.UpcomingDataMapper
 import com.brunodegan.androidplayground.data.metrics.Metrics
+import com.brunodegan.androidplayground.data.sync.SyncCategory
+import com.brunodegan.androidplayground.data.sync.SyncOutcome
+import com.brunodegan.androidplayground.data.sync.SyncResult
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -309,5 +313,48 @@ class MoviesRepositoryImpl(
             }.recoverCatching { _ ->
                 emit(null)
             }
+        }
+
+    override suspend fun refreshAll(): SyncResult =
+        SyncResult(
+            mapOf(
+                SyncCategory.NOW_PLAYING to
+                    refresh(
+                        fetch = { nowPlayingMoviesDataMapper.map(remoteDataSource.fetchNowPlaying()) },
+                        save = localDataSource::saveNowPlaying,
+                    ),
+                SyncCategory.POPULAR to
+                    refresh(
+                        fetch = { popularMoviesDataMapper.map(remoteDataSource.fetchPopular()) },
+                        save = localDataSource::savePopular,
+                    ),
+                SyncCategory.TOP_RATED to
+                    refresh(
+                        fetch = { topRatedMoviesDataMapper.map(remoteDataSource.fetchTopRated()) },
+                        save = localDataSource::saveTopRated,
+                    ),
+                SyncCategory.UPCOMING to
+                    refresh(
+                        fetch = { upcomingMoviesDataMapper.map(remoteDataSource.fetchUpcoming()) },
+                        save = localDataSource::saveUpcoming,
+                    ),
+            ),
+        )
+
+    // An empty remote list is a failure so it never wipes valid local data; favorites are never touched.
+    private suspend fun <T> refresh(
+        fetch: suspend () -> List<T>,
+        save: (List<T>) -> Unit,
+    ): SyncOutcome =
+        try {
+            val movies = fetch()
+            check(movies.isNotEmpty()) { "Empty movie list" }
+            save(movies)
+            SyncOutcome.Success(movies.size)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            e.message.takeIf { it.isNullOrEmpty().not() }?.let { metricsEventsDispatcher.onEvent(it) }
+            SyncOutcome.Failure(e.message)
         }
 }

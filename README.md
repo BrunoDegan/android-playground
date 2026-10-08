@@ -11,6 +11,7 @@ This project is an Android application built using **Kotlin** and **Jetpack Comp
 - Add or remove movies from the favorites list.
 - Error handling and retry functionality.
 - For Top rated, Upcoming, now playing screen and popular movies we applied Local first principle using ROOM database for caching all 4 categories locally
+- Background sync: a WorkManager periodic job (every 15 min, the platform minimum; requires network, battery and storage not low) refreshes all 4 categories into ROOM even when the app is closed.
 - Fully implemented using Jetpack Compose for UI.
 - Unit and instrumented tests for ViewModel and UI.
 
