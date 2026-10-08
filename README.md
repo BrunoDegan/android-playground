@@ -20,11 +20,12 @@ This project is an Android application built using **Kotlin** and **Jetpack Comp
 - **UI Framework**: Jetpack Compose
 - **Architecture**: MVVM (Model-View-ViewModel)
 - **Dependency Injection**: Koin
-- **Networking**: Retrofit
+- **Networking**: Ktor Client (OkHttp engine, kotlinx.serialization)
 - **Image Loading**: Coil
 - **Testing**:
   - Unit Tests: JUnit, MockK
-  - UI Tests: Jetpack Compose Testing, Espresso, UiAutomator, MockWebServer (for Testing API)
+  - UI Tests: Jetpack Compose Testing, Espresso, UiAutomator
+  - API Tests: Ktor MockEngine
 
 ## Project Structure
 

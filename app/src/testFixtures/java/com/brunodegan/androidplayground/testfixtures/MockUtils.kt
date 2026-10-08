@@ -12,9 +12,9 @@ import com.brunodegan.androidplayground.data.datasources.local.entities.NowPlayi
 import com.brunodegan.androidplayground.data.datasources.local.entities.PopularMoviesEntity
 import com.brunodegan.androidplayground.data.datasources.local.entities.TopRatedMoviesEntity
 import com.brunodegan.androidplayground.data.datasources.local.entities.UpcomingMoviesEntity
-import com.google.gson.Gson
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.serialization.json.Json
 
 object MockUtils {
     const val MOVIES_POSTER_CDN_URL = "https://image.tmdb.org/t/p/original"
@@ -174,7 +174,7 @@ object MockUtils {
         AddToFavoritesApiResponse(
             success = true,
             statusMessage = "Movie added to favorites successfully",
-            statusCode = "200",
+            statusCode = 200,
         )
 
     fun mockAddToFavoritesRequest(): AddToFavoritesRequest =
@@ -191,7 +191,7 @@ object MockUtils {
             statusCode = "200",
         )
 
-    fun toJsonString(obj: Any): String = Gson().toJson(obj)
+    inline fun <reified T> toJsonString(obj: T): String = Json.encodeToString(obj)
 
     fun <T> getResourceError(exception: Exception) = Resource.Error<T>(ErrorType.Generic(exception.message))
 }

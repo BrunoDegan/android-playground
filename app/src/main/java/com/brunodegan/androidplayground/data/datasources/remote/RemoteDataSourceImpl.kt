@@ -1,12 +1,12 @@
 package com.brunodegan.androidplayground.data.datasources.remote
 
-import com.brunodegan.androidplayground.data.api.RestApiService
+import com.brunodegan.androidplayground.data.api.KtorRestApiService
 import com.brunodegan.androidplayground.data.datasources.local.entities.AddToFavoritesRequest
 import org.koin.core.annotation.Single
 
 @Single
 class RemoteDataSourceImpl(
-    private val restApi: RestApiService,
+    private val restApi: KtorRestApiService,
 ) : RemoteDataSource {
     override suspend fun fetchNowPlaying() = restApi.fetchNowPlaying()
 

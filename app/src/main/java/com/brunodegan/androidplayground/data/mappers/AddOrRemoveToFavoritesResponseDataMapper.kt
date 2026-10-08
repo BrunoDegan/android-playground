@@ -10,6 +10,6 @@ class AddOrRemoveToFavoritesResponseDataMapper : BaseMapper<AddToFavoritesApiRes
         AddToFavoriteMoviesData(
             success = input.success,
             statusMessage = input.statusMessage,
-            statusCode = input.statusCode,
+            statusCode = input.statusCode.toString(),
         )
 }

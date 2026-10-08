@@ -10,8 +10,8 @@
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 
-# Required for Gson field mapping (@SerializedName), Retrofit's generic
-# response types (Call<List<T>>, suspend return types) and Parcelize.
+# Required for Gson (Room type converter) generic types, kotlinx.serialization
+# annotations and Parcelize.
 -keepattributes *Annotation*,Signature,Exceptions,InnerClasses,EnclosingMethod
 
 # --- Prevent sensitive data from reaching Logcat on a release build ---
@@ -36,7 +36,7 @@
 -repackageclasses ''
 -allowaccessmodification
 
-# No manual keep rules for AndroidX/Kotlin/Kotlinx, Retrofit, Gson, Room or
+# No manual keep rules for AndroidX/Kotlin/Kotlinx, Ktor, Gson, Room or
 # Coroutines: each ships its own consumer ProGuard rules, and broad manual
 # keeps here would only re-expose classes/members R8 would otherwise remove
 # or rename (see skills/r8-analyzer/references/REDUNDANT-RULES.md).
