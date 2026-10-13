@@ -73,11 +73,15 @@ extensions.configure<ApplicationExtension> {
 
     buildTypes {
         debug {
+            isMinifyEnabled = false
+            isShrinkResources = false
             optimization {
                 enable = false
             }
         }
         release {
+            isMinifyEnabled = true
+            isShrinkResources = true
             isDebuggable = false
             optimization {
                 enable = true
