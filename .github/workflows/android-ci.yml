@@ -1,4 +1,4 @@
-name: Android Android Playground CI configuration
+name: Android Playground CI configuration
 
 on:
   push:
