@@ -4,15 +4,18 @@ import com.brunodegan.androidplayground.base.network.base.ErrorType
 import com.brunodegan.androidplayground.base.network.base.Resource
 import com.brunodegan.androidplayground.data.datasources.local.LocalDataSource
 import com.brunodegan.androidplayground.data.datasources.local.entities.FavoriteMoviesEntity
+import com.brunodegan.androidplayground.data.datasources.local.entities.MovieEntity
 import com.brunodegan.androidplayground.data.datasources.local.entities.PopularMoviesEntity
 import com.brunodegan.androidplayground.data.datasources.local.entities.TopRatedMoviesEntity
 import com.brunodegan.androidplayground.data.datasources.remote.RemoteDataSource
-import com.brunodegan.androidplayground.data.mappers.AddOrRemoveToFavoritesResponseDataMapper
-import com.brunodegan.androidplayground.data.mappers.FavoritesDataMapper
-import com.brunodegan.androidplayground.data.mappers.NowPlayingDataMapper
-import com.brunodegan.androidplayground.data.mappers.PopularDataMapper
-import com.brunodegan.androidplayground.data.mappers.TopRatedDataMapper
-import com.brunodegan.androidplayground.data.mappers.UpcomingDataMapper
+import com.brunodegan.androidplayground.data.mappers.addToFavorites.AddToFavoriteResultMapper
+import com.brunodegan.androidplayground.data.mappers.favorites.AddOrRemoveToFavoritesResponseDataMapper
+import com.brunodegan.androidplayground.data.mappers.favorites.FavoritesDataMapper
+import com.brunodegan.androidplayground.data.mappers.movies.MoviesEntityMapper
+import com.brunodegan.androidplayground.data.mappers.nowPlaying.NowPlayingDataMapper
+import com.brunodegan.androidplayground.data.mappers.popular.PopularDataMapper
+import com.brunodegan.androidplayground.data.mappers.topRated.TopRatedDataMapper
+import com.brunodegan.androidplayground.data.mappers.upComing.UpcomingDataMapper
 import com.brunodegan.androidplayground.data.metrics.Metrics
 import com.brunodegan.androidplayground.data.repositories.MoviesRepositoryImpl
 import com.brunodegan.androidplayground.testfixtures.MockUtils.mockAddToFavoriteMoviesData
@@ -30,6 +33,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -57,6 +61,12 @@ class MoviesRepositoryTest {
     private val favoritesDataMapper: FavoritesDataMapper = mockk()
     private val metricsEventDispatcher: Metrics = mockk()
 
+    private val entityMapper = MoviesEntityMapper()
+    private val resultMapper = AddToFavoriteResultMapper()
+
+    // Repository returns newest first; fixture dates are ISO so plain string order is chronological
+    private fun List<MovieEntity>.toExpected() = map { entityMapper.map(it) }.sortedByDescending { it.releaseDate }.toImmutableList()
+
     private lateinit var repository: MoviesRepositoryImpl
 
     @Before
@@ -69,6 +79,8 @@ class MoviesRepositoryTest {
                 popularMoviesDataMapper = popularMoviesDataMapper,
                 topRatedMoviesDataMapper = topRatedDataMapper,
                 upcomingMoviesDataMapper = upcomingMoviesDataMapper,
+                addToFavoriteResultMapper = resultMapper,
+                moviesEntityMapper = entityMapper,
                 localDataSource = localDataSource,
                 remoteDataSource = remoteDataSource,
                 metricsEventsDispatcher = metricsEventDispatcher,
@@ -88,7 +100,21 @@ class MoviesRepositoryTest {
             val result = repository.getTopRateMovies()
 
             // Then
-            assertEquals(Resource.Success(topRatedMovies), result.first())
+            assertEquals(Resource.Success(topRatedMovies.toExpected()), result.first())
+        }
+
+    @Test
+    fun `GIVEN local movies with BR dates and a blank one WHEN getTopRateMovies is called THEN newest first and blank last`() =
+        runTest {
+            val base = mockTopRatedMoviesEntity().first()
+            val dates = listOf("05/01/2024", "20/12/2023", "", "01/02/2024")
+            val local = dates.mapIndexed { index, date -> base.copy(id = index + 1, releaseDate = date) }
+            coEvery { localDataSource.getFavoriteMovies() } returns flow { emit(mockFavoriteMoviesEntity()) }
+            coEvery { localDataSource.getTopRated() } returns flow { emit(local) }
+
+            val result = repository.getTopRateMovies().first() as Resource.Success
+
+            assertEquals(listOf("01/02/2024", "05/01/2024", "20/12/2023", ""), result.data.map { it.releaseDate })
         }
 
     @Test
@@ -111,7 +137,7 @@ class MoviesRepositoryTest {
 //            advanceUntilIdle()
 
             // THEN
-            assertEquals(Resource.Success(topRatedMovies), result.first())
+            assertEquals(Resource.Success(topRatedMovies.toExpected()), result.first())
         }
 
     @Test
@@ -158,7 +184,7 @@ class MoviesRepositoryTest {
 
             // THEN
             assertEquals(1, result.size)
-            assertEquals(expectedViewData, (result.first() as Resource.Success).data)
+            assertEquals(expectedViewData.toExpected(), (result.first() as Resource.Success).data)
         }
 
     @Test
@@ -172,7 +198,7 @@ class MoviesRepositoryTest {
             val result = repository.getFavorites()
 
             // Then
-            assertEquals(Resource.Success(favoritesMovies), result.first())
+            assertEquals(Resource.Success(favoritesMovies.toExpected()), result.first())
         }
 
     @Test
@@ -191,7 +217,7 @@ class MoviesRepositoryTest {
             val result = repository.getFavorites().toList()
 
             // THEN
-            assertEquals(Resource.Success(favoriteMoviesApiResponse), result.first())
+            assertEquals(Resource.Success(favoriteMoviesApiResponse.toExpected()), result.first())
         }
 
     @Test
@@ -233,7 +259,7 @@ class MoviesRepositoryTest {
 
             // THEN
             assertEquals(1, result.size)
-            assertEquals(expectedViewData, (result.first() as Resource.Success).data)
+            assertEquals(expectedViewData.toExpected(), (result.first() as Resource.Success).data)
         }
 
     @Test
@@ -250,7 +276,7 @@ class MoviesRepositoryTest {
             val result = repository.getPopularMovies()
 
             // Then
-            assertEquals(Resource.Success(popularMovies), result.first())
+            assertEquals(Resource.Success(popularMovies.toExpected()), result.first())
         }
 
     @Test
@@ -271,7 +297,7 @@ class MoviesRepositoryTest {
             val result = repository.getPopularMovies().toList()
 
             // THEN
-            assertEquals(Resource.Success(popularMovies), result.first())
+            assertEquals(Resource.Success(popularMovies.toExpected()), result.first())
         }
 
     @Test
@@ -317,7 +343,7 @@ class MoviesRepositoryTest {
 
             // THEN
             assertEquals(1, result.size)
-            assertEquals(expectedViewData, (result.first() as Resource.Success).data)
+            assertEquals(expectedViewData.toExpected(), (result.first() as Resource.Success).data)
         }
 
     @Test
@@ -338,7 +364,7 @@ class MoviesRepositoryTest {
             val result = repository.getNowPlayingMovies().toList()
 
             // THEN
-            assertEquals(Resource.Success(nowPlaying), result.first())
+            assertEquals(Resource.Success(nowPlaying.toExpected()), result.first())
         }
 
     @Test
@@ -385,7 +411,7 @@ class MoviesRepositoryTest {
 
             // THEN
             assertEquals(1, result.size)
-            assertEquals(expectedViewData, (result.first() as Resource.Success).data)
+            assertEquals(expectedViewData.toExpected(), (result.first() as Resource.Success).data)
         }
 
     @Test
@@ -400,7 +426,7 @@ class MoviesRepositoryTest {
 
             val result = repository.addFavorite(id = 1)
 
-            assertEquals(expectedViewData, (result.first() as Resource.Success).data)
+            assertEquals(resultMapper.map(expectedViewData), (result.first() as Resource.Success).data)
         }
 
     @Test

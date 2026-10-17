@@ -4,14 +4,24 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.brunodegan.androidplayground.data.datasources.local.entities.PopularMoviesEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface PopularDao {
+abstract class PopularDao {
     @Query("SELECT * FROM popular")
-    fun getAllPopular(): Flow<List<PopularMoviesEntity>>
+    abstract fun getAllPopular(): Flow<List<PopularMoviesEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertPopularMovies(upcomingMovies: List<PopularMoviesEntity>)
+    abstract fun insertPopularMovies(upcomingMovies: List<PopularMoviesEntity>)
+
+    @Query("DELETE FROM popular")
+    abstract fun deleteAll()
+
+    @Transaction
+    open fun replacePopularMovies(popularMovies: List<PopularMoviesEntity>) {
+        deleteAll()
+        insertPopularMovies(popularMovies)
+    }
 }

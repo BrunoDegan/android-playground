@@ -1,8 +1,8 @@
 package com.brunodegan.androidplayground.ui.screen.nowPlayingMovies.state
 
 import androidx.compose.runtime.Immutable
-import com.brunodegan.androidplayground.base.network.base.ErrorType
-import com.brunodegan.androidplayground.data.datasources.local.entities.NowPlayingMoviesEntity
+import com.brunodegan.androidplayground.ui.model.ErrorUiModel
+import com.brunodegan.androidplayground.ui.model.MovieUiModel
 import kotlinx.collections.immutable.ImmutableList
 
 @Immutable
@@ -12,10 +12,10 @@ sealed interface NowPlayingMoviesUiState {
     data object Loading : NowPlayingMoviesUiState
 
     data class Success(
-        val viewData: ImmutableList<NowPlayingMoviesEntity>,
+        val viewData: ImmutableList<MovieUiModel>,
     ) : NowPlayingMoviesUiState
 
     data class Error(
-        val error: ErrorType,
+        val error: ErrorUiModel,
     ) : NowPlayingMoviesUiState
 }

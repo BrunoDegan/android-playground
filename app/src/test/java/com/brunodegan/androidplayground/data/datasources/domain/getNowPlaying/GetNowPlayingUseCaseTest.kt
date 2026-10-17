@@ -1,10 +1,10 @@
 package com.brunodegan.androidplayground.data.datasources.domain.getNowPlaying
 
 import com.brunodegan.androidplayground.base.network.base.Resource
-import com.brunodegan.androidplayground.data.datasources.local.entities.NowPlayingMoviesEntity
-import com.brunodegan.androidplayground.data.repositories.MoviesRepository
 import com.brunodegan.androidplayground.domain.getNowPlaying.GetNowPlayingUseCase
 import com.brunodegan.androidplayground.domain.getNowPlaying.GetNowPlayingUseCaseImpl
+import com.brunodegan.androidplayground.domain.model.Movie
+import com.brunodegan.androidplayground.domain.repositories.MoviesRepository
 import com.brunodegan.androidplayground.testfixtures.MockUtils
 import com.brunodegan.androidplayground.testfixtures.MockUtils.getResourceError
 import com.brunodegan.androidplayground.testfixtures.TestDispatcherRule
@@ -40,7 +40,7 @@ class GetNowPlayingUseCaseTest {
     fun `GIVEN now playing movies WHEN invoke is called THEN emit Resource Success`() =
         runTest {
             // Given
-            val expectedData = Resource.Success(MockUtils.mockNowPlayingMoviesEntity())
+            val expectedData = Resource.Success(MockUtils.mockNowPlayingMovies())
             coEvery { repository.getNowPlayingMovies() } returns
                 flow {
                     emit(expectedData)
@@ -64,7 +64,7 @@ class GetNowPlayingUseCaseTest {
         runTest {
             // GIVEN
             val exception = Exception("Error fetching now playing movies")
-            val resourceError = getResourceError<ImmutableList<NowPlayingMoviesEntity>>(exception)
+            val resourceError = getResourceError<ImmutableList<Movie>>(exception)
 
             coEvery { repository.getNowPlayingMovies() } returns
                 flow {
@@ -76,7 +76,7 @@ class GetNowPlayingUseCaseTest {
 
             // THEN
             assertTrue {
-                result.first() is Resource.Error<ImmutableList<NowPlayingMoviesEntity>>
+                result.first() is Resource.Error<ImmutableList<Movie>>
             }
             assertEquals(
                 "Error fetching now playing movies",
@@ -97,7 +97,7 @@ class GetNowPlayingUseCaseTest {
             val result = useCase.invoke()
 
             // THEN
-            assertEquals(Resource.Success(persistentListOf<NowPlayingMoviesEntity>()), result.first())
+            assertEquals(Resource.Success(persistentListOf<Movie>()), result.first())
         }
 
     @After

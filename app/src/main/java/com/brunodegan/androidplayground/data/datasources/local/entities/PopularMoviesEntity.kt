@@ -8,24 +8,24 @@ import androidx.room.PrimaryKey
 data class PopularMoviesEntity(
     @PrimaryKey
     @ColumnInfo(name = "id")
-    val id: Int = 0,
+    override val id: Int = 0,
     @ColumnInfo(name = "title")
-    val title: String,
+    override val title: String,
     @ColumnInfo(name = "posterPath")
-    val posterPath: String,
+    override val posterPath: String,
     @ColumnInfo(name = "overview")
-    val overview: String,
+    override val overview: String,
     @ColumnInfo(name = "original_language")
-    val originalLanguage: String,
+    override val originalLanguage: String,
     @ColumnInfo(name = "popularity")
-    val popularity: Double,
+    override val popularity: Double,
     @ColumnInfo(name = "vote_average")
-    val voteAverage: Int,
+    override val voteAverage: Int,
     @ColumnInfo(name = "release_date")
-    val releaseDate: String,
+    override val releaseDate: String,
     @ColumnInfo(name = "is_favorite")
-    val isFavorite: Boolean,
-)
+    override val isFavorite: Boolean,
+) : MovieEntity
 
 fun List<PopularMoviesEntity>.update(favoritesMovies: List<FavoriteMoviesEntity>): List<PopularMoviesEntity> =
     this.map { movie ->

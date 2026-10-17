@@ -3,15 +3,19 @@ package com.brunodegan.androidplayground.data.datasources.ui.topRatedMovies
 import app.cash.turbine.test
 import com.brunodegan.androidplayground.base.network.base.Resource
 import com.brunodegan.androidplayground.base.ui.SnackbarUiStateHolder
-import com.brunodegan.androidplayground.data.datasources.local.entities.TopRatedMoviesEntity
 import com.brunodegan.androidplayground.domain.addToFavorites.AddToFavoritesUseCase
 import com.brunodegan.androidplayground.domain.getTopRated.GetTopRatedUseCase
+import com.brunodegan.androidplayground.domain.model.Movie
 import com.brunodegan.androidplayground.domain.removeFromFavorites.RemoveFromFavoritesUseCase
 import com.brunodegan.androidplayground.testfixtures.MockUtils.getResourceError
-import com.brunodegan.androidplayground.testfixtures.MockUtils.mockAddToFavoriteMoviesData
-import com.brunodegan.androidplayground.testfixtures.MockUtils.mockTopRatedMoviesEntity
+import com.brunodegan.androidplayground.testfixtures.MockUtils.mockFavoriteResult
+import com.brunodegan.androidplayground.testfixtures.MockUtils.mockMovieUiModels
+import com.brunodegan.androidplayground.testfixtures.MockUtils.mockTopRatedMovies
 import com.brunodegan.androidplayground.testfixtures.TestDispatcherRule
-import com.brunodegan.androidplayground.ui.screen.topRatedMovies.events.TopRatedMoviesUiEvents
+import com.brunodegan.androidplayground.ui.mappers.ErrorUiModelMapper
+import com.brunodegan.androidplayground.ui.mappers.MovieUiModelMapper
+import com.brunodegan.androidplayground.ui.model.ErrorUiModel
+import com.brunodegan.androidplayground.ui.screen.topRatedMovies.actions.TopRatedMoviesUiActions
 import com.brunodegan.androidplayground.ui.screen.topRatedMovies.state.TopRatedMoviesUiState
 import com.brunodegan.androidplayground.ui.screen.topRatedMovies.viewModel.TopRatedMoviesViewModel
 import io.mockk.coEvery
@@ -44,23 +48,25 @@ class TopRatedMoviesViewModelTest {
                 addToFavoritesUseCase = addToFavoritesUseCase,
                 removeFromFavoritesUseCase = removeFromFavoritesUseCase,
                 dispatcher = testDispatcher,
+                movieUiModelMapper = MovieUiModelMapper(),
+                errorUiModelMapper = ErrorUiModelMapper(),
             )
     }
 
     @Test
     fun `GIVEN view model collects view entity succssefully WEN getTopRatedMovies is invoked THEN asserts correct states is emitted`() =
         runTest {
-            val mockData = mockTopRatedMoviesEntity()
+            val mockData = mockTopRatedMovies()
             val successfullyResponse = Resource.Success(mockData)
 
             coEvery { getTopRatedUseCase.invoke() } returns flow { emit(successfullyResponse) }
 
-            viewModel.getTopRatedMovies()
+            viewModel.onUiAction(TopRatedMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.uiState.test {
                 assertEquals(TopRatedMoviesUiState.Initial, awaitItem())
                 assertEquals(TopRatedMoviesUiState.Loading, awaitItem())
-                assertEquals(TopRatedMoviesUiState.Success(mockData), awaitItem())
+                assertEquals(TopRatedMoviesUiState.Success(mockMovieUiModels(mockData)), awaitItem())
             }
         }
 
@@ -68,16 +74,16 @@ class TopRatedMoviesViewModelTest {
     fun `GIVEN view model collects view entity with error state propagated WEN getTopRatedMovies is invoked THEN asserts business error occurs`() =
         runTest {
             val exception = Exception("Error retrieving upComing movies")
-            val resourceError = getResourceError<ImmutableList<TopRatedMoviesEntity>>(exception)
+            val resourceError = getResourceError<ImmutableList<Movie>>(exception)
 
             coEvery { getTopRatedUseCase.invoke() } returns flow { emit(resourceError) }
 
-            viewModel.getTopRatedMovies()
+            viewModel.onUiAction(TopRatedMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.uiState.test {
                 assertEquals(TopRatedMoviesUiState.Initial, awaitItem())
                 assertEquals(TopRatedMoviesUiState.Loading, awaitItem())
-                assertEquals(TopRatedMoviesUiState.Error(resourceError.error), awaitItem())
+                assertEquals(TopRatedMoviesUiState.Error(ErrorUiModel(resourceError.error.message)), awaitItem())
             }
         }
 
@@ -89,7 +95,7 @@ class TopRatedMoviesViewModelTest {
 
             coEvery { getTopRatedUseCase.invoke() } returns flow { throw systemError }
 
-            viewModel.getTopRatedMovies()
+            viewModel.onUiAction(TopRatedMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.snackbarState.test {
                 assertEquals(SnackbarUiStateHolder.SnackbarUi(errorMsg), awaitItem())
@@ -97,26 +103,26 @@ class TopRatedMoviesViewModelTest {
         }
 
     @Test
-    fun `GIVEN previous error happens and users clicks onRetry button WHEN viewModel receives OnRetryButtonClickedUiEvent THEN asserts successfully state occurs`() =
+    fun `GIVEN previous error happens and users clicks onRetry button WHEN viewModel receives OnRetryButtonClickedUiAction THEN asserts successfully state occurs`() =
         runTest {
-            val mockData = mockTopRatedMoviesEntity()
+            val mockData = mockTopRatedMovies()
             val successfullyResponse = Resource.Success(mockData)
 
             coEvery { getTopRatedUseCase.invoke() } returns flow { emit(successfullyResponse) }
 
-            viewModel.onUiEvent(event = TopRatedMoviesUiEvents.OnRetryButtonClickedUiEvent)
+            viewModel.onUiAction(action = TopRatedMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.uiState.test {
                 assertEquals(TopRatedMoviesUiState.Initial, awaitItem())
                 assertEquals(TopRatedMoviesUiState.Loading, awaitItem())
-                assertEquals(TopRatedMoviesUiState.Success(mockData), awaitItem())
+                assertEquals(TopRatedMoviesUiState.Success(mockMovieUiModels(mockData)), awaitItem())
             }
         }
 
     @Test
-    fun `GIVEN success now top rated movie data WHEN OnAddFavButtonClickedUiEvent is dispatched THEN asserts Initial and loading state and snackbar ui event is called`() =
+    fun `GIVEN success now top rated movie data WHEN OnAddFavButtonClickedUiAction is dispatched THEN asserts Initial and loading state and snackbar ui event is called`() =
         runTest {
-            val mockAddFavoriteData = mockAddToFavoriteMoviesData()
+            val mockAddFavoriteData = mockFavoriteResult()
             val successfullyResponse = Resource.Success(mockAddFavoriteData)
             val movieId = 1
 
@@ -127,9 +133,9 @@ class TopRatedMoviesViewModelTest {
                     )
                 }
 
-            viewModel.onUiEvent(
-                event =
-                    TopRatedMoviesUiEvents.OnAddFavButtonClickedUiEvent(
+            viewModel.onUiAction(
+                action =
+                    TopRatedMoviesUiActions.OnAddFavButtonClickedUiAction(
                         movieId,
                     ),
             )
@@ -143,9 +149,9 @@ class TopRatedMoviesViewModelTest {
         }
 
     @Test
-    fun `GIVEN success remove from top rated movies data WHEN OnRemoveFavButtonClickedUiEvent is dispatched THEN asserts Initial and loading state and snackbar state is propagated`() =
+    fun `GIVEN success remove from top rated movies data WHEN OnRemoveFavButtonClickedUiAction is dispatched THEN asserts Initial and loading state and snackbar state is propagated`() =
         runTest {
-            val mockAddFavoriteData = mockAddToFavoriteMoviesData()
+            val mockAddFavoriteData = mockFavoriteResult()
             val successfullyResponse = Resource.Success(mockAddFavoriteData)
             val movieId = 1
 
@@ -154,9 +160,9 @@ class TopRatedMoviesViewModelTest {
                     emit(successfullyResponse)
                 }
 
-            viewModel.onUiEvent(
-                event =
-                    TopRatedMoviesUiEvents.OnRemoveFavButtonClickedUiEvent(
+            viewModel.onUiAction(
+                action =
+                    TopRatedMoviesUiActions.OnRemoveFavButtonClickedUiAction(
                         movieId,
                     ),
             )

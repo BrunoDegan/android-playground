@@ -21,7 +21,7 @@ class LocalDataSourceImpl(
     private val upComingDao: UpComingDao,
     private val popularDao: PopularDao,
 ) : LocalDataSource {
-    override fun saveFavorites(favoriteMovie: List<FavoriteMoviesEntity>) = favoriteDao.insertFavorite(favoriteMovie)
+    override fun saveFavorites(favoriteMovie: List<FavoriteMoviesEntity>) = favoriteDao.replaceFavorites(favoriteMovie)
 
     override suspend fun removeFavoriteMovie(id: Int) = favoriteDao.deleteFavoriteById(id)
 
@@ -36,18 +36,18 @@ class LocalDataSourceImpl(
     override suspend fun getUpcoming(): Flow<List<UpcomingMoviesEntity>> = upComingDao.getAllUpcoming()
 
     override fun saveNowPlaying(nowPlayingData: List<NowPlayingMoviesEntity>) {
-        nowPlayingDao.insertNowPlayingMovies(nowPlayingData)
+        nowPlayingDao.replaceNowPlayingMovies(nowPlayingData)
     }
 
     override fun savePopular(popularData: List<PopularMoviesEntity>) {
-        popularDao.insertPopularMovies(popularData)
+        popularDao.replacePopularMovies(popularData)
     }
 
     override fun saveTopRated(topRatedData: List<TopRatedMoviesEntity>) {
-        topRatedDao.insertTopRatedMovies(topRatedData)
+        topRatedDao.replaceTopRatedMovies(topRatedData)
     }
 
     override fun saveUpcoming(upcomingData: List<UpcomingMoviesEntity>) {
-        upComingDao.insertUpcomingMovies(upcomingData)
+        upComingDao.replaceUpcomingMovies(upcomingData)
     }
 }

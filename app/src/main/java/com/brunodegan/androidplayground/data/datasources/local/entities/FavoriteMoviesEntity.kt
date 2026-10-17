@@ -8,15 +8,21 @@ import androidx.room.PrimaryKey
 data class FavoriteMoviesEntity(
     @PrimaryKey
     @ColumnInfo(name = "id")
-    val id: Int = 0,
+    override val id: Int = 0,
     @ColumnInfo(name = "lastUpdated")
     val lastUpdated: Long,
     @ColumnInfo(name = "title")
-    val title: String,
+    override val title: String,
     @ColumnInfo(name = "posterPath")
-    val posterPath: String,
+    override val posterPath: String,
     @ColumnInfo(name = "overview")
-    val overview: String,
+    override val overview: String,
     @ColumnInfo(name = "release_date")
-    val releaseDate: String,
-)
+    override val releaseDate: String,
+) : MovieEntity {
+    // Not stored for favorites; getters have no backing field so Room ignores them
+    override val originalLanguage: String get() = ""
+    override val popularity: Double get() = 0.0
+    override val voteAverage: Int get() = 0
+    override val isFavorite: Boolean get() = true
+}

@@ -3,11 +3,11 @@ package com.brunodegan.androidplayground.data.datasources.data.sync
 import android.content.Context
 import androidx.work.ListenableWorker.Result
 import androidx.work.WorkerParameters
-import com.brunodegan.androidplayground.data.repositories.MoviesRepository
 import com.brunodegan.androidplayground.data.sync.MovieSyncWorker
-import com.brunodegan.androidplayground.data.sync.SyncCategory
-import com.brunodegan.androidplayground.data.sync.SyncOutcome
-import com.brunodegan.androidplayground.data.sync.SyncResult
+import com.brunodegan.androidplayground.domain.model.SyncCategory
+import com.brunodegan.androidplayground.domain.model.SyncOutcome
+import com.brunodegan.androidplayground.domain.model.SyncResult
+import com.brunodegan.androidplayground.domain.repositories.MoviesRepository
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk

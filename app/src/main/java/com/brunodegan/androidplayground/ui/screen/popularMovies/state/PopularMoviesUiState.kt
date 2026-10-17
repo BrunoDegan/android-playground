@@ -1,8 +1,8 @@
 package com.brunodegan.androidplayground.ui.screen.popularMovies.state
 
 import androidx.compose.runtime.Immutable
-import com.brunodegan.androidplayground.base.network.base.ErrorType
-import com.brunodegan.androidplayground.data.datasources.local.entities.PopularMoviesEntity
+import com.brunodegan.androidplayground.ui.model.ErrorUiModel
+import com.brunodegan.androidplayground.ui.model.MovieUiModel
 import kotlinx.collections.immutable.ImmutableList
 
 @Immutable
@@ -12,10 +12,10 @@ sealed interface PopularMoviesUiState {
     data object Loading : PopularMoviesUiState
 
     data class Success(
-        val viewData: ImmutableList<PopularMoviesEntity>,
+        val viewData: ImmutableList<MovieUiModel>,
     ) : PopularMoviesUiState
 
     data class Error(
-        val error: ErrorType,
+        val error: ErrorUiModel,
     ) : PopularMoviesUiState
 }

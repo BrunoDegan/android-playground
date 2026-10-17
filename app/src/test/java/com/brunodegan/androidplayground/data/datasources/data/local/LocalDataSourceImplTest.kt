@@ -50,12 +50,12 @@ class LocalDataSourceImplTest {
     fun `GIVEN favorite movies entity mocks WHEN local storage saves favorite movies THEN assert favoriteDao inserts is called`() =
         runTest {
             val mockFavoritesMovies = MockUtils.mockFavoriteMoviesEntity()
-            coJustRun { favoritesDao.insertFavorite(mockFavoritesMovies) }
+            coJustRun { favoritesDao.replaceFavorites(mockFavoritesMovies) }
 
             localDataSource.saveFavorites(mockFavoritesMovies)
 
             verify(exactly = 1) {
-                favoritesDao.insertFavorite(mockFavoritesMovies)
+                favoritesDao.replaceFavorites(mockFavoritesMovies)
             }
         }
 
@@ -143,12 +143,12 @@ class LocalDataSourceImplTest {
     fun `GIVEN now playing movies entity mocks WHEN local storage saves now playing movie THEN inserts into dao once`() =
         runTest {
             val mockNowPlayingMovies = MockUtils.mockNowPlayingMoviesEntity()
-            coJustRun { nowPlayingDao.insertNowPlayingMovies(mockNowPlayingMovies) }
+            coJustRun { nowPlayingDao.replaceNowPlayingMovies(mockNowPlayingMovies) }
 
             localDataSource.saveNowPlaying(mockNowPlayingMovies)
 
             coVerify(exactly = 1) {
-                nowPlayingDao.insertNowPlayingMovies(mockNowPlayingMovies)
+                nowPlayingDao.replaceNowPlayingMovies(mockNowPlayingMovies)
             }
         }
 
@@ -156,12 +156,12 @@ class LocalDataSourceImplTest {
     fun `GIVEN popular movies entity mocks WHEN local storage saves popular movies THEN inserts into dao once`() =
         runTest {
             val mockPopularMovies = MockUtils.mockPopularMoviesEntity()
-            coJustRun { popularDao.insertPopularMovies(mockPopularMovies) }
+            coJustRun { popularDao.replacePopularMovies(mockPopularMovies) }
 
             localDataSource.savePopular(mockPopularMovies)
 
             coVerify(exactly = 1) {
-                popularDao.insertPopularMovies(mockPopularMovies)
+                popularDao.replacePopularMovies(mockPopularMovies)
             }
         }
 
@@ -169,12 +169,12 @@ class LocalDataSourceImplTest {
     fun `GIVEN top rated movies entity mocks WHEN local storage saves top rated movies THEN inserts into dao once`() =
         runTest {
             val mockTopRatedMovies = MockUtils.mockTopRatedMoviesEntity()
-            coJustRun { topRatedDao.insertTopRatedMovies(mockTopRatedMovies) }
+            coJustRun { topRatedDao.replaceTopRatedMovies(mockTopRatedMovies) }
 
             localDataSource.saveTopRated(mockTopRatedMovies)
 
             coVerify(exactly = 1) {
-                topRatedDao.insertTopRatedMovies(mockTopRatedMovies)
+                topRatedDao.replaceTopRatedMovies(mockTopRatedMovies)
             }
         }
 
@@ -182,12 +182,12 @@ class LocalDataSourceImplTest {
     fun `GIVEN upcoming movies entity mocks WHEN local storage saves upcoming movies THEN inserts into dao once`() =
         runTest {
             val mockUpcomingMovies = MockUtils.mockUpcomingMoviesEntity()
-            coJustRun { upComingDao.insertUpcomingMovies(mockUpcomingMovies) }
+            coJustRun { upComingDao.replaceUpcomingMovies(mockUpcomingMovies) }
 
             localDataSource.saveUpcoming(mockUpcomingMovies)
 
             coVerify(exactly = 1) {
-                upComingDao.insertUpcomingMovies(mockUpcomingMovies)
+                upComingDao.replaceUpcomingMovies(mockUpcomingMovies)
             }
         }
 

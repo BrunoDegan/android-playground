@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import coil.request.ImageRequest
@@ -68,9 +69,9 @@ import com.brunodegan.androidplayground.base.ui.LoaderUiState
 import com.brunodegan.androidplayground.base.ui.ObserveAsEvent
 import com.brunodegan.androidplayground.base.ui.PosterShape
 import com.brunodegan.androidplayground.base.ui.SnackbarUiStateHolder
-import com.brunodegan.androidplayground.data.datasources.local.entities.PopularMoviesEntity
 import com.brunodegan.androidplayground.data.metrics.TrackScreen
-import com.brunodegan.androidplayground.ui.screen.popularMovies.events.PopularMoviesUiEvents
+import com.brunodegan.androidplayground.ui.model.MovieUiModel
+import com.brunodegan.androidplayground.ui.screen.popularMovies.actions.PopularMoviesUiActions
 import com.brunodegan.androidplayground.ui.screen.popularMovies.state.PopularMoviesUiState
 import com.brunodegan.androidplayground.ui.screen.popularMovies.viewModel.PopularMoviesViewModel
 import com.skydoves.compose.stability.runtime.TraceRecomposition
@@ -89,7 +90,8 @@ fun PopularMoviesScreen(
     onNavigateUp: () -> Unit,
     onShowSnackbar: (String) -> Unit,
 ) {
-    val viewModel: PopularMoviesViewModel = koinViewModel()
+    val viewModelStore = rememberViewModelStoreOwner()
+    val viewModel: PopularMoviesViewModel = koinViewModel(viewModelStoreOwner = viewModelStore)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     BackHandler {
@@ -110,7 +112,7 @@ fun PopularMoviesScreen(
         scrollBehavior = scrollBehavior,
         modifier = modifier,
     ) {
-        viewModel.onUiEvent(event = it)
+        viewModel.onUiAction(action = it)
     }
 }
 
@@ -122,7 +124,7 @@ internal fun PopularMoviesScreenContent(
     scrollBehavior: TopAppBarScrollBehavior,
     state: PopularMoviesUiState,
     modifier: Modifier,
-    onEvent: (PopularMoviesUiEvents) -> Unit,
+    onAction: (PopularMoviesUiActions) -> Unit,
 ) {
     when (state) {
         is PopularMoviesUiState.Initial -> {
@@ -140,10 +142,10 @@ internal fun PopularMoviesScreenContent(
                 modifier = modifier,
                 viewData = state.viewData,
                 onFavoriteButtonClicked = {
-                    onEvent(PopularMoviesUiEvents.OnAddFavButtonClickedUiEvent(it))
+                    onAction(PopularMoviesUiActions.OnAddFavButtonClickedUiAction(it))
                 },
-                onRemoveFavButtonClickedUiEvent = {
-                    onEvent(PopularMoviesUiEvents.OnRemoveFavButtonClickedUiEvent(it))
+                onRemoveFavButtonClickedUiAction = {
+                    onAction(PopularMoviesUiActions.OnRemoveFavButtonClickedUiAction(it))
                 },
             )
         }
@@ -153,7 +155,7 @@ internal fun PopularMoviesScreenContent(
                 modifier = modifier,
                 errorData = state.error,
             ) {
-                onEvent(PopularMoviesUiEvents.OnRetryButtonClickedUiEvent)
+                onAction(PopularMoviesUiActions.OnRetryButtonClickedUiAction)
             }
         }
     }
@@ -165,9 +167,9 @@ private fun SuccessState(
     modifier: Modifier,
     listState: LazyListState,
     scrollBehavior: TopAppBarScrollBehavior,
-    viewData: ImmutableList<PopularMoviesEntity>,
+    viewData: ImmutableList<MovieUiModel>,
     onFavoriteButtonClicked: (Int) -> Unit,
-    onRemoveFavButtonClickedUiEvent: (Int) -> Unit,
+    onRemoveFavButtonClickedUiAction: (Int) -> Unit,
 ) {
     LazyColumn(
         state = listState,
@@ -187,8 +189,8 @@ private fun SuccessState(
                 onFavoriteButtonClicked = {
                     onFavoriteButtonClicked(it)
                 },
-                onRemoveFavButtonClickedUiEvent = {
-                    onRemoveFavButtonClickedUiEvent(it)
+                onRemoveFavButtonClickedUiAction = {
+                    onRemoveFavButtonClickedUiAction(it)
                 },
             )
         }
@@ -198,9 +200,9 @@ private fun SuccessState(
 @Composable
 private fun PopularMoviesCard(
     modifier: Modifier = Modifier,
-    viewData: PopularMoviesEntity,
+    viewData: MovieUiModel,
     onFavoriteButtonClicked: (Int) -> Unit,
-    onRemoveFavButtonClickedUiEvent: (Int) -> Unit,
+    onRemoveFavButtonClickedUiAction: (Int) -> Unit,
 ) {
     var isFavoriteButtonClicked by rememberSaveable { mutableStateOf(viewData.isFavorite) }
 
@@ -269,7 +271,7 @@ private fun PopularMoviesCard(
                         if (isFavoriteButtonClicked == true) {
                             onFavoriteButtonClicked(viewData.id)
                         } else {
-                            onRemoveFavButtonClickedUiEvent(viewData.id)
+                            onRemoveFavButtonClickedUiAction(viewData.id)
                         }
                     },
         )
@@ -479,7 +481,7 @@ fun PopularMoviesScreenPreview() {
             PopularMoviesUiState.Success(
                 viewData =
                     persistentListOf(
-                        PopularMoviesEntity(
+                        MovieUiModel(
                             id = 0,
                             title = "title",
                             posterPath = "posterPath",
@@ -492,7 +494,7 @@ fun PopularMoviesScreenPreview() {
                         ),
                     ),
             ),
-        onEvent = {},
+        onAction = {},
         modifier = Modifier,
         scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
     )

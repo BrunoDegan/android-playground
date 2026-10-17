@@ -1,7 +1,7 @@
 package com.brunodegan.androidplayground.data.datasources.data.mappers
 
 import com.brunodegan.androidplayground.base.utils.formatUsDateToBrDate
-import com.brunodegan.androidplayground.data.mappers.NowPlayingDataMapper
+import com.brunodegan.androidplayground.data.mappers.nowPlaying.NowPlayingDataMapper
 import com.brunodegan.androidplayground.testfixtures.MockUtils
 import com.brunodegan.androidplayground.testfixtures.MockUtils.MOVIES_POSTER_CDN_URL
 import io.mockk.unmockkAll

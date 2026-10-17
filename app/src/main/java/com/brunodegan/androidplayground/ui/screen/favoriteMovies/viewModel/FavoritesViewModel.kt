@@ -1,76 +1,37 @@
 package com.brunodegan.androidplayground.ui.screen.favoriteMovies.viewModel
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.brunodegan.androidplayground.base.dispatchers.DispatchersProviderInterface
-import com.brunodegan.androidplayground.base.network.base.Resource
-import com.brunodegan.androidplayground.base.ui.SnackbarUiStateHolder
+import com.brunodegan.androidplayground.base.ui.BaseViewViewModel
+import com.brunodegan.androidplayground.base.ui.MovieListUiState
 import com.brunodegan.androidplayground.domain.getFavorites.GetFavoritesUseCase
-import com.brunodegan.androidplayground.ui.screen.favoriteMovies.events.FavoriteMoviesUiEvents
+import com.brunodegan.androidplayground.ui.mappers.ErrorUiModelMapper
+import com.brunodegan.androidplayground.ui.mappers.MovieUiModelMapper
+import com.brunodegan.androidplayground.ui.screen.favoriteMovies.actions.FavoriteMoviesUiActions
 import com.brunodegan.androidplayground.ui.screen.favoriteMovies.state.FavoriteMoviesUiState
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
 class FavoritesViewModel(
-    private val useCase: GetFavoritesUseCase,
-    private val dispatcher: DispatchersProviderInterface,
-) : ViewModel() {
-    private val _snackbarState = Channel<SnackbarUiStateHolder>()
-    val snackbarState = _snackbarState.receiveAsFlow()
-
-    private val _uiState =
-        MutableStateFlow<FavoriteMoviesUiState>(FavoriteMoviesUiState.Initial)
-    val uiState =
-        _uiState
-            .onStart {
-                getFavoriteMovies()
-            }.stateIn(
-                viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = FavoriteMoviesUiState.Initial,
-            )
-
-    fun onUiEvent(event: FavoriteMoviesUiEvents) {
-        when (event) {
-            is FavoriteMoviesUiEvents.OnRetryButtonClickedUiEvent ->
-                getFavoriteMovies()
-        }
-    }
-
-    fun getFavoriteMovies() {
-        viewModelScope.launch {
-            useCase()
-                .flowOn(dispatcher.io)
-                .distinctUntilChanged()
-                .onStart {
-                    _uiState.update { FavoriteMoviesUiState.Loading }
-                }.catch { error ->
-                    error.message?.let {
-                        _snackbarState.send(SnackbarUiStateHolder.SnackbarUi(it))
-                    }
-                }.collectLatest { result ->
-                    when (result) {
-                        is Resource.Success -> {
-                            _uiState.value = FavoriteMoviesUiState.Success(result.data)
-                        }
-
-                        is Resource.Error -> {
-                            _uiState.value = FavoriteMoviesUiState.Error(result.error)
-                        }
-                    }
-                }
+    useCase: GetFavoritesUseCase,
+    movieUiModelMapper: MovieUiModelMapper,
+    errorUiModelMapper: ErrorUiModelMapper,
+    dispatcher: DispatchersProviderInterface,
+) : BaseViewViewModel<FavoriteMoviesUiState>(
+        loadMovies = { useCase() },
+        states =
+            MovieListUiState(
+                initial = FavoriteMoviesUiState.Initial,
+                loading = FavoriteMoviesUiState.Loading,
+                success = FavoriteMoviesUiState::Success,
+                error = FavoriteMoviesUiState::Error,
+            ),
+        movieUiModelMapper = movieUiModelMapper,
+        errorUiModelMapper = errorUiModelMapper,
+        dispatcher = dispatcher,
+    ) {
+    fun onUiAction(action: FavoriteMoviesUiActions) {
+        when (action) {
+            is FavoriteMoviesUiActions.OnRetryButtonClickedUiAction -> load()
         }
     }
 }

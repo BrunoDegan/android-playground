@@ -3,15 +3,19 @@ package com.brunodegan.androidplayground.data.datasources.ui.upComingMovies
 import app.cash.turbine.test
 import com.brunodegan.androidplayground.base.network.base.Resource
 import com.brunodegan.androidplayground.base.ui.SnackbarUiStateHolder
-import com.brunodegan.androidplayground.data.datasources.local.entities.UpcomingMoviesEntity
 import com.brunodegan.androidplayground.domain.addToFavorites.AddToFavoritesUseCase
 import com.brunodegan.androidplayground.domain.getUpComing.GetUpComingUseCase
+import com.brunodegan.androidplayground.domain.model.Movie
 import com.brunodegan.androidplayground.domain.removeFromFavorites.RemoveFromFavoritesUseCase
 import com.brunodegan.androidplayground.testfixtures.MockUtils.getResourceError
-import com.brunodegan.androidplayground.testfixtures.MockUtils.mockAddToFavoriteMoviesData
-import com.brunodegan.androidplayground.testfixtures.MockUtils.mockUpcomingMoviesEntity
+import com.brunodegan.androidplayground.testfixtures.MockUtils.mockFavoriteResult
+import com.brunodegan.androidplayground.testfixtures.MockUtils.mockMovieUiModels
+import com.brunodegan.androidplayground.testfixtures.MockUtils.mockUpcomingMovies
 import com.brunodegan.androidplayground.testfixtures.TestDispatcherRule
-import com.brunodegan.androidplayground.ui.screen.upComingMovies.events.UpcomingMoviesUiEvent
+import com.brunodegan.androidplayground.ui.mappers.ErrorUiModelMapper
+import com.brunodegan.androidplayground.ui.mappers.MovieUiModelMapper
+import com.brunodegan.androidplayground.ui.model.ErrorUiModel
+import com.brunodegan.androidplayground.ui.screen.upComingMovies.actions.UpComingMoviesUiActions
 import com.brunodegan.androidplayground.ui.screen.upComingMovies.state.UpComingMoviesUiState
 import com.brunodegan.androidplayground.ui.screen.upComingMovies.viewModel.UpComingMoviesViewModel
 import io.mockk.coEvery
@@ -44,23 +48,25 @@ class UpComingMoviesViewModelTest {
                 addToFavoritesUseCase = addToFavoritesUseCase,
                 removeFromFavoritesUseCase = removeFromFavoritesUseCase,
                 dispatcher = testDispatcher,
+                movieUiModelMapper = MovieUiModelMapper(),
+                errorUiModelMapper = ErrorUiModelMapper(),
             )
     }
 
     @Test
     fun `GIVEN view model collects view entity succssefully WEN getUpComingUseCase is invoked THEN asserts correct states is emitted`() =
         runTest {
-            val mockData = mockUpcomingMoviesEntity()
+            val mockData = mockUpcomingMovies()
             val successfullyResponse = Resource.Success(mockData)
 
             coEvery { getUpComingUseCase.invoke() } returns flow { emit(successfullyResponse) }
 
-            viewModel.getUpCommingMovies()
+            viewModel.onUiAction(UpComingMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.uiState.test {
                 assertEquals(UpComingMoviesUiState.Initial, awaitItem())
                 assertEquals(UpComingMoviesUiState.Loading, awaitItem())
-                assertEquals(UpComingMoviesUiState.Success(mockData), awaitItem())
+                assertEquals(UpComingMoviesUiState.Success(mockMovieUiModels(mockData)), awaitItem())
             }
         }
 
@@ -68,16 +74,16 @@ class UpComingMoviesViewModelTest {
     fun `GIVEN view model collects view entity with error state propagated WEN getUpComingUseCase is invoked THEN asserts business error occurs`() =
         runTest {
             val exception = Exception("Error retrieving upComing movies")
-            val resourceError = getResourceError<ImmutableList<UpcomingMoviesEntity>>(exception)
+            val resourceError = getResourceError<ImmutableList<Movie>>(exception)
 
             coEvery { getUpComingUseCase.invoke() } returns flow { emit(resourceError) }
 
-            viewModel.getUpCommingMovies()
+            viewModel.onUiAction(UpComingMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.uiState.test {
                 assertEquals(UpComingMoviesUiState.Initial, awaitItem())
                 assertEquals(UpComingMoviesUiState.Loading, awaitItem())
-                assertEquals(UpComingMoviesUiState.Error(resourceError.error), awaitItem())
+                assertEquals(UpComingMoviesUiState.Error(ErrorUiModel(resourceError.error.message)), awaitItem())
             }
         }
 
@@ -89,7 +95,7 @@ class UpComingMoviesViewModelTest {
 
             coEvery { getUpComingUseCase.invoke() } returns flow { throw systemError }
 
-            viewModel.getUpCommingMovies()
+            viewModel.onUiAction(UpComingMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.snackbarState.test {
                 assertEquals(SnackbarUiStateHolder.SnackbarUi(errorMsg), awaitItem())
@@ -97,26 +103,26 @@ class UpComingMoviesViewModelTest {
         }
 
     @Test
-    fun `GIVEN previous error happens and users clicks onRetry button WHEN viewModel receives OnRetryButtonClickedUiEvent THEN asserts successfully state occurs`() =
+    fun `GIVEN previous error happens and users clicks onRetry button WHEN viewModel receives OnRetryButtonClickedUiAction THEN asserts successfully state occurs`() =
         runTest {
-            val mockData = mockUpcomingMoviesEntity()
+            val mockData = mockUpcomingMovies()
             val successfullyResponse = Resource.Success(mockData)
 
             coEvery { getUpComingUseCase.invoke() } returns flow { emit(successfullyResponse) }
 
-            viewModel.onUiEvent(event = UpcomingMoviesUiEvent.OnRetryButtonClickedUiEvent)
+            viewModel.onUiAction(action = UpComingMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.uiState.test {
                 assertEquals(UpComingMoviesUiState.Initial, awaitItem())
                 assertEquals(UpComingMoviesUiState.Loading, awaitItem())
-                assertEquals(UpComingMoviesUiState.Success(mockData), awaitItem())
+                assertEquals(UpComingMoviesUiState.Success(mockMovieUiModels(mockData)), awaitItem())
             }
         }
 
     @Test
-    fun `GIVEN success add to favorite movie data WHEN OnAddFavButtonClickedUiEvent is dispatched THEN asserts Initial and loading state and snackbar ui event is called`() =
+    fun `GIVEN success add to favorite movie data WHEN OnAddFavButtonClickedUiAction is dispatched THEN asserts Initial and loading state and snackbar ui event is called`() =
         runTest {
-            val mockData = mockAddToFavoriteMoviesData()
+            val mockData = mockFavoriteResult()
             val successfullyResponse = Resource.Success(mockData)
             val movieId = 1
 
@@ -127,7 +133,7 @@ class UpComingMoviesViewModelTest {
                     )
                 }
 
-            viewModel.onUiEvent(event = UpcomingMoviesUiEvent.OnAddFavButtonClickedUiEvent(movieId))
+            viewModel.onUiAction(action = UpComingMoviesUiActions.OnAddFavButtonClickedUiAction(movieId))
 
             viewModel.snackbarState.test {
                 assertEquals(SnackbarUiStateHolder.SnackbarUi(mockData.statusMessage), awaitItem())
@@ -135,9 +141,9 @@ class UpComingMoviesViewModelTest {
         }
 
     @Test
-    fun `GIVEN success remove from favorite movie data WHEN OnRemoveFavButtonClickedUiEvent is dispatched THEN asserts Initial and loading state and snackbar state is propagated`() =
+    fun `GIVEN success remove from favorite movie data WHEN OnRemoveFavButtonClickedUiAction is dispatched THEN asserts Initial and loading state and snackbar state is propagated`() =
         runTest {
-            val mockData = mockAddToFavoriteMoviesData()
+            val mockData = mockFavoriteResult()
             val successfullyResponse = Resource.Success(mockData)
             val movieId = 1
 
@@ -148,9 +154,9 @@ class UpComingMoviesViewModelTest {
                     )
                 }
 
-            viewModel.onUiEvent(
-                event =
-                    UpcomingMoviesUiEvent.OnRemoveFavButtonClickedUiEvent(
+            viewModel.onUiAction(
+                action =
+                    UpComingMoviesUiActions.OnRemoveFavButtonClickedUiAction(
                         movieId,
                     ),
             )

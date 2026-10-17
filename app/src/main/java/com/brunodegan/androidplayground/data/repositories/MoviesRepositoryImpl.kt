@@ -3,8 +3,8 @@ package com.brunodegan.androidplayground.data.repositories
 import com.brunodegan.androidplayground.base.network.base.ErrorType
 import com.brunodegan.androidplayground.base.network.base.Resource
 import com.brunodegan.androidplayground.base.utils.isCacheValid
+import com.brunodegan.androidplayground.base.utils.toSortableDate
 import com.brunodegan.androidplayground.data.datasources.local.LocalDataSource
-import com.brunodegan.androidplayground.data.datasources.local.entities.AddToFavoriteMoviesData
 import com.brunodegan.androidplayground.data.datasources.local.entities.AddToFavoritesRequest
 import com.brunodegan.androidplayground.data.datasources.local.entities.FavoriteMoviesEntity
 import com.brunodegan.androidplayground.data.datasources.local.entities.NowPlayingMoviesEntity
@@ -13,16 +13,21 @@ import com.brunodegan.androidplayground.data.datasources.local.entities.TopRated
 import com.brunodegan.androidplayground.data.datasources.local.entities.UpcomingMoviesEntity
 import com.brunodegan.androidplayground.data.datasources.local.entities.update
 import com.brunodegan.androidplayground.data.datasources.remote.RemoteDataSource
-import com.brunodegan.androidplayground.data.mappers.AddOrRemoveToFavoritesResponseDataMapper
-import com.brunodegan.androidplayground.data.mappers.FavoritesDataMapper
-import com.brunodegan.androidplayground.data.mappers.NowPlayingDataMapper
-import com.brunodegan.androidplayground.data.mappers.PopularDataMapper
-import com.brunodegan.androidplayground.data.mappers.TopRatedDataMapper
-import com.brunodegan.androidplayground.data.mappers.UpcomingDataMapper
+import com.brunodegan.androidplayground.data.mappers.addToFavorites.AddToFavoriteResultMapper
+import com.brunodegan.androidplayground.data.mappers.favorites.AddOrRemoveToFavoritesResponseDataMapper
+import com.brunodegan.androidplayground.data.mappers.favorites.FavoritesDataMapper
+import com.brunodegan.androidplayground.data.mappers.movies.MoviesEntityMapper
+import com.brunodegan.androidplayground.data.mappers.nowPlaying.NowPlayingDataMapper
+import com.brunodegan.androidplayground.data.mappers.popular.PopularDataMapper
+import com.brunodegan.androidplayground.data.mappers.topRated.TopRatedDataMapper
+import com.brunodegan.androidplayground.data.mappers.upComing.UpcomingDataMapper
 import com.brunodegan.androidplayground.data.metrics.Metrics
-import com.brunodegan.androidplayground.data.sync.SyncCategory
-import com.brunodegan.androidplayground.data.sync.SyncOutcome
-import com.brunodegan.androidplayground.data.sync.SyncResult
+import com.brunodegan.androidplayground.domain.model.FavoriteResult
+import com.brunodegan.androidplayground.domain.model.Movie
+import com.brunodegan.androidplayground.domain.model.SyncCategory
+import com.brunodegan.androidplayground.domain.model.SyncOutcome
+import com.brunodegan.androidplayground.domain.model.SyncResult
+import com.brunodegan.androidplayground.domain.repositories.MoviesRepository
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
@@ -40,6 +45,8 @@ class MoviesRepositoryImpl(
     private val popularMoviesDataMapper: PopularDataMapper,
     private val topRatedMoviesDataMapper: TopRatedDataMapper,
     private val upcomingMoviesDataMapper: UpcomingDataMapper,
+    private val addToFavoriteResultMapper: AddToFavoriteResultMapper,
+    private val moviesEntityMapper: MoviesEntityMapper,
     private val localDataSource: LocalDataSource,
     private val remoteDataSource: RemoteDataSource,
     private val metricsEventsDispatcher: Metrics,
@@ -47,24 +54,40 @@ class MoviesRepositoryImpl(
     private fun updateTopRatedMovies(
         movies: List<TopRatedMoviesEntity>,
         favorites: List<FavoriteMoviesEntity>?,
-    ): ImmutableList<TopRatedMoviesEntity> = (favorites?.let { movies.update(it) } ?: movies).toImmutableList()
+    ): ImmutableList<Movie> =
+        (favorites?.let { movies.update(it) } ?: movies)
+            .map { moviesEntityMapper.map(it) }
+            .sortedByDescending { it.releaseDate.toSortableDate() }
+            .toImmutableList()
 
     private fun updatePopularMovies(
         movies: List<PopularMoviesEntity>,
         favorites: List<FavoriteMoviesEntity>?,
-    ): ImmutableList<PopularMoviesEntity> = (favorites?.let { movies.update(it) } ?: movies).toImmutableList()
+    ): ImmutableList<Movie> =
+        (favorites?.let { movies.update(it) } ?: movies)
+            .map { moviesEntityMapper.map(it) }
+            .sortedByDescending { it.releaseDate.toSortableDate() }
+            .toImmutableList()
 
     private fun updateUpcomingMovies(
         movies: List<UpcomingMoviesEntity>,
         favorites: List<FavoriteMoviesEntity>?,
-    ): ImmutableList<UpcomingMoviesEntity> = (favorites?.let { movies.update(it) } ?: movies).toImmutableList()
+    ): ImmutableList<Movie> =
+        (favorites?.let { movies.update(it) } ?: movies)
+            .map { moviesEntityMapper.map(it) }
+            .sortedByDescending { it.releaseDate.toSortableDate() }
+            .toImmutableList()
 
     private fun updateNowPlayingMovies(
         movies: List<NowPlayingMoviesEntity>,
         favorites: List<FavoriteMoviesEntity>?,
-    ): ImmutableList<NowPlayingMoviesEntity> = (favorites?.let { movies.update(it) } ?: movies).toImmutableList()
+    ): ImmutableList<Movie> =
+        (favorites?.let { movies.update(it) } ?: movies)
+            .map { moviesEntityMapper.map(it) }
+            .sortedByDescending { it.releaseDate.toSortableDate() }
+            .toImmutableList()
 
-    override fun getTopRateMovies(): Flow<Resource<ImmutableList<TopRatedMoviesEntity>>> =
+    override fun getTopRateMovies(): Flow<Resource<ImmutableList<Movie>>> =
         flow {
             val localTopRatedMovies = localDataSource.getTopRated().firstOrNull()
             val savedFavoriteMovies = getSavedFavoriteMovies().firstOrNull()
@@ -104,7 +127,7 @@ class MoviesRepositoryImpl(
             }
         }
 
-    override fun getPopularMovies(): Flow<Resource<ImmutableList<PopularMoviesEntity>>> =
+    override fun getPopularMovies(): Flow<Resource<ImmutableList<Movie>>> =
         flow {
             val localPopularMovies = localDataSource.getPopular().firstOrNull()
             val savedFavoriteMovies = getSavedFavoriteMovies().firstOrNull()
@@ -144,7 +167,7 @@ class MoviesRepositoryImpl(
             }
         }
 
-    override fun getUpcomingMovies(): Flow<Resource<ImmutableList<UpcomingMoviesEntity>>> =
+    override fun getUpcomingMovies(): Flow<Resource<ImmutableList<Movie>>> =
         flow {
             val localUpcomingMovies = localDataSource.getUpcoming().firstOrNull()
             val savedFavoriteMovies = getSavedFavoriteMovies().firstOrNull()
@@ -184,7 +207,7 @@ class MoviesRepositoryImpl(
             }
         }
 
-    override fun getNowPlayingMovies(): Flow<Resource<ImmutableList<NowPlayingMoviesEntity>>> =
+    override fun getNowPlayingMovies(): Flow<Resource<ImmutableList<Movie>>> =
         flow {
             val nowPlayingMovies = localDataSource.getNowPlaying().firstOrNull()
             val savedFavoriteMovies = getSavedFavoriteMovies().firstOrNull()
@@ -224,7 +247,7 @@ class MoviesRepositoryImpl(
             }
         }
 
-    override fun addFavorite(id: Int): Flow<Resource<AddToFavoriteMoviesData>> =
+    override fun addFavorite(id: Int): Flow<Resource<FavoriteResult>> =
         flow {
             runCatching {
                 val request = AddToFavoritesRequest(mediaId = id, favorite = true)
@@ -234,8 +257,11 @@ class MoviesRepositoryImpl(
                     .takeIf { it.isNullOrEmpty().not() }
                     ?.let { metricsEventsDispatcher.onEvent(it) }
             }.map { apiDataModel ->
-                val mappedResult = addOrRemoveToFavoritesResponseDataMapper.map(apiDataModel)
-                mappedResult
+                addToFavoriteResultMapper.map(
+                    addOrRemoveToFavoritesResponseDataMapper.map(
+                        apiDataModel,
+                    ),
+                )
             }.onSuccess { convertedData ->
                 emit(Resource.Success(convertedData))
             }.recoverCatching { error ->
@@ -243,7 +269,7 @@ class MoviesRepositoryImpl(
             }
         }
 
-    override fun removeFavorite(id: Int): Flow<Resource<AddToFavoriteMoviesData>> =
+    override fun removeFavorite(id: Int): Flow<Resource<FavoriteResult>> =
         flow {
             runCatching {
                 val request = AddToFavoritesRequest(mediaId = id, favorite = false)
@@ -254,8 +280,11 @@ class MoviesRepositoryImpl(
                     .takeIf { it.isNullOrEmpty().not() }
                     ?.let { metricsEventsDispatcher.onEvent(it) }
             }.map { apiDataModel ->
-                val mappedResult = addOrRemoveToFavoritesResponseDataMapper.map(apiDataModel)
-                mappedResult
+                addToFavoriteResultMapper.map(
+                    addOrRemoveToFavoritesResponseDataMapper.map(
+                        apiDataModel,
+                    ),
+                )
             }.onSuccess { convertedData ->
                 emit(Resource.Success(convertedData))
             }.recoverCatching { error ->
@@ -263,12 +292,19 @@ class MoviesRepositoryImpl(
             }
         }
 
-    override fun getFavorites(): Flow<Resource<ImmutableList<FavoriteMoviesEntity>>> =
+    override fun getFavorites(): Flow<Resource<ImmutableList<Movie>>> =
         flow {
             val favorites = localDataSource.getFavoriteMovies().first()
 
             if (favorites.isNullOrEmpty().not() && favorites.all { isCacheValid(it.lastUpdated) }) {
-                emit(Resource.Success(favorites.toImmutableList()))
+                emit(
+                    Resource.Success(
+                        favorites
+                            .map { moviesEntityMapper.map(it) }
+                            .sortedByDescending { it.releaseDate.toSortableDate() }
+                            .toImmutableList(),
+                    ),
+                )
                 return@flow
             }
 
@@ -283,7 +319,14 @@ class MoviesRepositoryImpl(
                 localDataSource.saveFavorites(mappedResult)
                 mappedResult
             }.onSuccess { convertedData ->
-                emit(Resource.Success(convertedData.toImmutableList()))
+                emit(
+                    Resource.Success(
+                        convertedData
+                            .map { moviesEntityMapper.map(it) }
+                            .sortedByDescending { it.releaseDate.toSortableDate() }
+                            .toImmutableList(),
+                    ),
+                )
             }.recoverCatching { error ->
                 emit(Resource.Error(ErrorType.Generic(error.message)))
             }
@@ -342,6 +385,7 @@ class MoviesRepositoryImpl(
                     refresh(
                         fetch = { favoritesDataMapper.map(remoteDataSource.fetchFavorites()) },
                         save = localDataSource::saveFavorites,
+                        allowEmpty = true,
                     ),
             ),
         )
@@ -349,10 +393,11 @@ class MoviesRepositoryImpl(
     private suspend fun <T> refresh(
         fetch: suspend () -> List<T>,
         save: (List<T>) -> Unit,
+        allowEmpty: Boolean = false,
     ): SyncOutcome =
         try {
             val movies = fetch()
-            if (movies.isNullOrEmpty().not()) {
+            if (allowEmpty || movies.isNotEmpty()) {
                 save(movies)
                 SyncOutcome.Success(movies.size)
             } else {
@@ -361,9 +406,8 @@ class MoviesRepositoryImpl(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            e.message
-                .takeIf { it.isNullOrEmpty().not() }
-                ?.let { metricsEventsDispatcher.onEvent(it) }
+            // Class name only: exception messages can embed the request URL (account id in path)
+            metricsEventsDispatcher.onEvent("sync_failed: ${e::class.simpleName}")
             SyncOutcome.Failure(e.message)
         }
 }

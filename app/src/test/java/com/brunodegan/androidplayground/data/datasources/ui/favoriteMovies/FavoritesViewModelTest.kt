@@ -3,12 +3,16 @@ package com.brunodegan.androidplayground.data.datasources.ui.favoriteMovies
 import app.cash.turbine.test
 import com.brunodegan.androidplayground.base.network.base.Resource
 import com.brunodegan.androidplayground.base.ui.SnackbarUiStateHolder
-import com.brunodegan.androidplayground.data.datasources.local.entities.FavoriteMoviesEntity
 import com.brunodegan.androidplayground.domain.getFavorites.GetFavoritesUseCase
+import com.brunodegan.androidplayground.domain.model.Movie
 import com.brunodegan.androidplayground.testfixtures.MockUtils.getResourceError
-import com.brunodegan.androidplayground.testfixtures.MockUtils.mockFavoriteMoviesEntity
+import com.brunodegan.androidplayground.testfixtures.MockUtils.mockFavoriteMovies
+import com.brunodegan.androidplayground.testfixtures.MockUtils.mockMovieUiModels
 import com.brunodegan.androidplayground.testfixtures.TestDispatcherRule
-import com.brunodegan.androidplayground.ui.screen.favoriteMovies.events.FavoriteMoviesUiEvents
+import com.brunodegan.androidplayground.ui.mappers.ErrorUiModelMapper
+import com.brunodegan.androidplayground.ui.mappers.MovieUiModelMapper
+import com.brunodegan.androidplayground.ui.model.ErrorUiModel
+import com.brunodegan.androidplayground.ui.screen.favoriteMovies.actions.FavoriteMoviesUiActions
 import com.brunodegan.androidplayground.ui.screen.favoriteMovies.state.FavoriteMoviesUiState
 import com.brunodegan.androidplayground.ui.screen.favoriteMovies.viewModel.FavoritesViewModel
 import io.mockk.coEvery
@@ -33,23 +37,29 @@ class FavoritesViewModelTest {
 
     @Before
     fun setup() {
-        viewModel = FavoritesViewModel(useCase = useCase, dispatcher = testDispatcher)
+        viewModel =
+            FavoritesViewModel(
+                useCase = useCase,
+                movieUiModelMapper = MovieUiModelMapper(),
+                errorUiModelMapper = ErrorUiModelMapper(),
+                dispatcher = testDispatcher,
+            )
     }
 
     @Test
     fun `GIVEN view model collects view entity succssefully WEN getFavoriteMovies is invoked THEN asserts correct states is emitted`() =
         runTest {
-            val mockData = mockFavoriteMoviesEntity()
+            val mockData = mockFavoriteMovies()
             val successfullyResponse = Resource.Success(mockData)
 
             coEvery { useCase.invoke() } returns flow { emit(successfullyResponse) }
 
-            viewModel.getFavoriteMovies()
+            viewModel.onUiAction(FavoriteMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.uiState.test {
                 assertEquals(FavoriteMoviesUiState.Initial, awaitItem())
                 assertEquals(FavoriteMoviesUiState.Loading, awaitItem())
-                assertEquals(FavoriteMoviesUiState.Success(mockData), awaitItem())
+                assertEquals(FavoriteMoviesUiState.Success(mockMovieUiModels(mockData)), awaitItem())
             }
         }
 
@@ -57,16 +67,16 @@ class FavoritesViewModelTest {
     fun `GIVEN view model collects view entity with error state propagated WEN getFavoriteMovies is invoked THEN asserts business error occurs`() =
         runTest {
             val exception = Exception("Error retrieving favorites movies")
-            val resourceError = getResourceError<ImmutableList<FavoriteMoviesEntity>>(exception)
+            val resourceError = getResourceError<ImmutableList<Movie>>(exception)
 
             coEvery { useCase.invoke() } returns flow { emit(resourceError) }
 
-            viewModel.getFavoriteMovies()
+            viewModel.onUiAction(FavoriteMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.uiState.test {
                 assertEquals(FavoriteMoviesUiState.Initial, awaitItem())
                 assertEquals(FavoriteMoviesUiState.Loading, awaitItem())
-                assertEquals(FavoriteMoviesUiState.Error(resourceError.error), awaitItem())
+                assertEquals(FavoriteMoviesUiState.Error(ErrorUiModel(resourceError.error.message)), awaitItem())
             }
         }
 
@@ -78,7 +88,7 @@ class FavoritesViewModelTest {
 
             coEvery { useCase.invoke() } returns flow { throw systemError }
 
-            viewModel.getFavoriteMovies()
+            viewModel.onUiAction(FavoriteMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.snackbarState.test {
                 assertEquals(SnackbarUiStateHolder.SnackbarUi(errorMsg), awaitItem())
@@ -86,19 +96,19 @@ class FavoritesViewModelTest {
         }
 
     @Test
-    fun `GIVEN previous error happens and users clicks onRetry button WHEN viewModel receives OnRetryButtonClickedUiEvent THEN asserts successfully state occurs`() =
+    fun `GIVEN previous error happens and users clicks onRetry button WHEN viewModel receives OnRetryButtonClickedUiAction THEN asserts successfully state occurs`() =
         runTest {
-            val mockData = mockFavoriteMoviesEntity()
+            val mockData = mockFavoriteMovies()
             val successfullyResponse = Resource.Success(mockData)
 
             coEvery { useCase.invoke() } returns flow { emit(successfullyResponse) }
 
-            viewModel.onUiEvent(event = FavoriteMoviesUiEvents.OnRetryButtonClickedUiEvent)
+            viewModel.onUiAction(action = FavoriteMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.uiState.test {
                 assertEquals(FavoriteMoviesUiState.Initial, awaitItem())
                 assertEquals(FavoriteMoviesUiState.Loading, awaitItem())
-                assertEquals(FavoriteMoviesUiState.Success(mockData), awaitItem())
+                assertEquals(FavoriteMoviesUiState.Success(mockMovieUiModels(mockData)), awaitItem())
             }
         }
 

@@ -1,10 +1,10 @@
 package com.brunodegan.androidplayground.data.datasources.domain.getTopRated
 
 import com.brunodegan.androidplayground.base.network.base.Resource
-import com.brunodegan.androidplayground.data.datasources.local.entities.TopRatedMoviesEntity
-import com.brunodegan.androidplayground.data.repositories.MoviesRepository
 import com.brunodegan.androidplayground.domain.getTopRated.GetTopRatedUseCase
 import com.brunodegan.androidplayground.domain.getTopRated.GetTopRatedUseCaseImpl
+import com.brunodegan.androidplayground.domain.model.Movie
+import com.brunodegan.androidplayground.domain.repositories.MoviesRepository
 import com.brunodegan.androidplayground.testfixtures.MockUtils
 import com.brunodegan.androidplayground.testfixtures.MockUtils.getResourceError
 import com.brunodegan.androidplayground.testfixtures.TestDispatcherRule
@@ -40,7 +40,7 @@ class GetTopRatedUseCaseTest {
     fun `GIVEN top rated movies WHEN invoke is called THEN emit Resource Success`() =
         runTest {
             // Given
-            val expectedData = Resource.Success(MockUtils.mockTopRatedMoviesEntity())
+            val expectedData = Resource.Success(MockUtils.mockTopRatedMovies())
             coEvery { repository.getTopRateMovies() } returns
                 flow {
                     emit(expectedData)
@@ -64,7 +64,7 @@ class GetTopRatedUseCaseTest {
         runTest {
             // GIVEN
             val exception = Exception("Error fetching now top rated movies")
-            val resourceError = getResourceError<ImmutableList<TopRatedMoviesEntity>>(exception)
+            val resourceError = getResourceError<ImmutableList<Movie>>(exception)
 
             coEvery { repository.getTopRateMovies() } returns
                 flow {
@@ -76,7 +76,7 @@ class GetTopRatedUseCaseTest {
 
             // THEN
             assertTrue {
-                result.first() is Resource.Error<ImmutableList<TopRatedMoviesEntity>>
+                result.first() is Resource.Error<ImmutableList<Movie>>
             }
             assertEquals(
                 "Error fetching now top rated movies",
@@ -97,7 +97,7 @@ class GetTopRatedUseCaseTest {
             val result = useCase.invoke()
 
             // THEN
-            assertEquals(Resource.Success(persistentListOf<TopRatedMoviesEntity>()), result.first())
+            assertEquals(Resource.Success(persistentListOf<Movie>()), result.first())
         }
 
     @After

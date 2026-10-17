@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import coil.request.ImageRequest
@@ -69,9 +70,9 @@ import com.brunodegan.androidplayground.base.ui.LoaderUiState
 import com.brunodegan.androidplayground.base.ui.ObserveAsEvent
 import com.brunodegan.androidplayground.base.ui.PosterShape
 import com.brunodegan.androidplayground.base.ui.SnackbarUiStateHolder
-import com.brunodegan.androidplayground.data.datasources.local.entities.UpcomingMoviesEntity
 import com.brunodegan.androidplayground.data.metrics.TrackScreen
-import com.brunodegan.androidplayground.ui.screen.upComingMovies.events.UpcomingMoviesUiEvent
+import com.brunodegan.androidplayground.ui.model.MovieUiModel
+import com.brunodegan.androidplayground.ui.screen.upComingMovies.actions.UpComingMoviesUiActions
 import com.brunodegan.androidplayground.ui.screen.upComingMovies.state.UpComingMoviesUiState
 import com.brunodegan.androidplayground.ui.screen.upComingMovies.viewModel.UpComingMoviesViewModel
 import com.skydoves.compose.stability.runtime.TraceRecomposition
@@ -90,7 +91,8 @@ fun UpComingMoviesScreen(
     onShowSnackbar: (String) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    val viewModel: UpComingMoviesViewModel = koinViewModel()
+    val viewModelStore = rememberViewModelStoreOwner()
+    val viewModel: UpComingMoviesViewModel = koinViewModel(viewModelStoreOwner = viewModelStore)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     BackHandler {
@@ -111,7 +113,7 @@ fun UpComingMoviesScreen(
         state = uiState,
         modifier = modifier,
     ) {
-        viewModel.onUiEvent(event = it)
+        viewModel.onUiAction(action = it)
     }
 }
 
@@ -123,7 +125,7 @@ internal fun UpComingMoviesScreenContent(
     state: UpComingMoviesUiState,
     listState: LazyListState,
     modifier: Modifier,
-    onEvent: (UpcomingMoviesUiEvent) -> Unit,
+    onAction: (UpComingMoviesUiActions) -> Unit,
 ) {
     when (state) {
         is UpComingMoviesUiState.Initial -> {
@@ -137,10 +139,10 @@ internal fun UpComingMoviesScreenContent(
                 viewData = state.viewData,
                 listState = listState,
                 onFavoriteButtonClicked = {
-                    onEvent(UpcomingMoviesUiEvent.OnAddFavButtonClickedUiEvent(it))
+                    onAction(UpComingMoviesUiActions.OnAddFavButtonClickedUiAction(it))
                 },
-                onRemoveFavButtonClickedUiEvent = {
-                    onEvent(UpcomingMoviesUiEvent.OnRemoveFavButtonClickedUiEvent(it))
+                onRemoveFavButtonClickedUiAction = {
+                    onAction(UpComingMoviesUiActions.OnRemoveFavButtonClickedUiAction(it))
                 },
             )
         }
@@ -150,7 +152,7 @@ internal fun UpComingMoviesScreenContent(
                 modifier = modifier,
                 errorData = state.error,
             ) {
-                onEvent(UpcomingMoviesUiEvent.OnRetryButtonClickedUiEvent)
+                onAction(UpComingMoviesUiActions.OnRetryButtonClickedUiAction)
             }
         }
 
@@ -166,9 +168,9 @@ private fun SuccessState(
     scrollBehavior: TopAppBarScrollBehavior,
     modifier: Modifier = Modifier,
     listState: LazyListState,
-    viewData: ImmutableList<UpcomingMoviesEntity>,
+    viewData: ImmutableList<MovieUiModel>,
     onFavoriteButtonClicked: (Int) -> Unit,
-    onRemoveFavButtonClickedUiEvent: (Int) -> Unit,
+    onRemoveFavButtonClickedUiAction: (Int) -> Unit,
 ) {
     LazyColumn(
         state = listState,
@@ -188,8 +190,8 @@ private fun SuccessState(
                 onFavoriteButtonClicked = {
                     onFavoriteButtonClicked(it)
                 },
-                onRemoveFavButtonClickedUiEvent = {
-                    onRemoveFavButtonClickedUiEvent(it)
+                onRemoveFavButtonClickedUiAction = {
+                    onRemoveFavButtonClickedUiAction(it)
                 },
             )
         }
@@ -199,9 +201,9 @@ private fun SuccessState(
 @Composable
 private fun UpComingMovesCard(
     modifier: Modifier = Modifier,
-    viewData: UpcomingMoviesEntity,
+    viewData: MovieUiModel,
     onFavoriteButtonClicked: (Int) -> Unit,
-    onRemoveFavButtonClickedUiEvent: (Int) -> Unit,
+    onRemoveFavButtonClickedUiAction: (Int) -> Unit,
 ) {
     var isFavoriteButtonClicked by rememberSaveable { mutableStateOf(viewData.isFavorite) }
 
@@ -269,7 +271,7 @@ private fun UpComingMovesCard(
                         if (isFavoriteButtonClicked) {
                             onFavoriteButtonClicked(viewData.id)
                         } else {
-                            onRemoveFavButtonClickedUiEvent(viewData.id)
+                            onRemoveFavButtonClickedUiAction(viewData.id)
                         }
                     },
         )
@@ -479,7 +481,7 @@ fun UpcomingScreenPreview() {
             UpComingMoviesUiState.Success(
                 viewData =
                     persistentListOf(
-                        UpcomingMoviesEntity(
+                        MovieUiModel(
                             id = 0,
                             title = "title",
                             posterPath = "posterPath",
@@ -492,7 +494,7 @@ fun UpcomingScreenPreview() {
                         ),
                     ),
             ),
-        onEvent = {},
+        onAction = {},
         modifier = Modifier,
     )
 }
