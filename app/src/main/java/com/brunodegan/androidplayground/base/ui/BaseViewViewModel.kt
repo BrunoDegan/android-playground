@@ -57,7 +57,15 @@ abstract class BaseViewViewModel<S : Any>(
                     .flowOn(dispatcher.io)
                     .onStart { _uiState.update { states.loading } }
                     .catch { error ->
-                        _uiState.update { states.error(errorUiModelMapper.map(ErrorType.Generic(error.message))) }
+                        _uiState.update {
+                            states.error(
+                                errorUiModelMapper.map(
+                                    ErrorType.Generic(
+                                        error.message,
+                                    ),
+                                ),
+                            )
+                        }
                         showSnackbar(error.message)
                     }.collect { result ->
                         _uiState.update {
