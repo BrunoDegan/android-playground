@@ -202,8 +202,7 @@ object MockUtils {
 
     fun <T> getResourceError(exception: Exception) = Resource.Error<T>(ErrorType.Generic(exception.message))
 
-    fun mockMovieUiModels(movies: ImmutableList<Movie>): ImmutableList<MovieUiModel> =
-        movies.map { MovieUiModelMapper().map(it) }.toImmutableList()
+    fun mockMovieUiModels(movies: ImmutableList<Movie>): ImmutableList<MovieUiModel> = movies.map { MovieUiModelMapper().map(it) }.toImmutableList()
 
     fun mockFavoriteMovies(): ImmutableList<Movie> = mockFavoriteMoviesEntity().map { MoviesEntityMapper().map(it) }.toImmutableList()
 

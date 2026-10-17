@@ -37,8 +37,7 @@ class KtorRestApiService(
                 setBody(addToFavoritesRequest)
             }.decode()
 
-    suspend fun getFavorites(accountId: String = BuildConfig.TMDB_ACCOUNT_ID): MoviesApiDataResponse =
-        client.get(FAVORITE_MOVIE_URL_LIST.format(accountId)).decode()
+    suspend fun getFavorites(accountId: String = BuildConfig.TMDB_ACCOUNT_ID): MoviesApiDataResponse = client.get(FAVORITE_MOVIE_URL_LIST.format(accountId)).decode()
 
     private suspend fun getMovies(path: String): MoviesApiDataResponse = client.get(path) { parameter(LANGUAGE, PT_BR) }.decode()
 

@@ -138,17 +138,13 @@ object AndroidTestUtils {
             ),
         )
 
-    fun mockFavoriteMovieUiModels(): ImmutableList<MovieUiModel> =
-        mockFavoriteMovies().map { MovieUiModelMapper().map(it) }.toImmutableList()
+    fun mockFavoriteMovieUiModels(): ImmutableList<MovieUiModel> = mockFavoriteMovies().map { MovieUiModelMapper().map(it) }.toImmutableList()
 
-    fun mockTopRatedMovieUiModels(): ImmutableList<MovieUiModel> =
-        mockTopRatedMovies().map { MovieUiModelMapper().map(it) }.toImmutableList()
+    fun mockTopRatedMovieUiModels(): ImmutableList<MovieUiModel> = mockTopRatedMovies().map { MovieUiModelMapper().map(it) }.toImmutableList()
 
-    fun mockNowPlayingMovieUiModels(): ImmutableList<MovieUiModel> =
-        mockNowPlayingMovies().map { MovieUiModelMapper().map(it) }.toImmutableList()
+    fun mockNowPlayingMovieUiModels(): ImmutableList<MovieUiModel> = mockNowPlayingMovies().map { MovieUiModelMapper().map(it) }.toImmutableList()
 
-    fun mockUpcomingMovieUiModels(): ImmutableList<MovieUiModel> =
-        mockUpcomingMovies().map { MovieUiModelMapper().map(it) }.toImmutableList()
+    fun mockUpcomingMovieUiModels(): ImmutableList<MovieUiModel> = mockUpcomingMovies().map { MovieUiModelMapper().map(it) }.toImmutableList()
 
     fun mockPopularMovieUiModels(): ImmutableList<MovieUiModel> = mockPopularMovies().map { MovieUiModelMapper().map(it) }.toImmutableList()
 
