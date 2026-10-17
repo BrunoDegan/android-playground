@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 abstract class BaseViewViewModel<S : Any>(
@@ -54,16 +55,17 @@ abstract class BaseViewViewModel<S : Any>(
             viewModelScope.launch {
                 loadMovies()
                     .flowOn(dispatcher.io)
-                    .onStart { _uiState.value = states.loading }
+                    .onStart { _uiState.update { states.loading } }
                     .catch { error ->
-                        _uiState.value = states.error(errorUiModelMapper.map(ErrorType.Generic(error.message)))
+                        _uiState.update { states.error(errorUiModelMapper.map(ErrorType.Generic(error.message))) }
                         showSnackbar(error.message)
                     }.collect { result ->
-                        _uiState.value =
+                        _uiState.update {
                             when (result) {
                                 is Resource.Success -> states.success(result.data.map { movieUiModelMapper.map(it) }.toImmutableList())
                                 is Resource.Error -> states.error(errorUiModelMapper.map(result.error))
                             }
+                        }
                     }
             }
     }
