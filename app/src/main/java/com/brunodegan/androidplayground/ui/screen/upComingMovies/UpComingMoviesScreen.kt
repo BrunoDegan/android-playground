@@ -211,7 +211,8 @@ private fun UpComingMovesCard(
         ImageRequest
             .Builder(LocalContext.current)
             .memoryCacheKey(viewData.title)
-            .diskCacheKey(viewData.title)
+            .diskCacheKey(viewData.id.toString())
+            .memoryCacheKey(viewData.id.toString())
             .data(viewData.posterPath)
             .decoderFactory(SvgDecoder.Factory())
             .scale(Scale.FIT)
@@ -223,9 +224,9 @@ private fun UpComingMovesCard(
     val cardColor by animateColorAsState(
         targetValue =
             if (isFavoriteButtonClicked) {
-                MaterialTheme.colorScheme.onSecondary
+                MaterialTheme.colorScheme.inversePrimary
             } else {
-                MaterialTheme.colorScheme.primaryContainer
+                MaterialTheme.colorScheme.secondaryContainer
             },
         animationSpec =
             spring(

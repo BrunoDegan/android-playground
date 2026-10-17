@@ -210,21 +210,21 @@ private fun PopularMoviesCard(
         ImageRequest
             .Builder(LocalContext.current)
             .data(viewData.posterPath)
+            .diskCacheKey(viewData.id.toString())
+            .memoryCacheKey(viewData.id.toString())
             .decoderFactory(SvgDecoder.Factory())
             .scale(Scale.FIT)
             .crossfade(true)
             .placeholder(R.drawable.movie_icon)
             .error(R.drawable.error_img)
-            .memoryCacheKey(viewData.posterPath)
-            .diskCacheKey(viewData.posterPath)
             .build()
 
     val cardColor by animateColorAsState(
         targetValue =
-            if (isFavoriteButtonClicked == true) {
-                MaterialTheme.colorScheme.onSecondary
+            if (isFavoriteButtonClicked) {
+                MaterialTheme.colorScheme.inversePrimary
             } else {
-                MaterialTheme.colorScheme.primaryContainer
+                MaterialTheme.colorScheme.secondaryContainer
             },
         animationSpec =
             spring(
@@ -254,7 +254,7 @@ private fun PopularMoviesCard(
         Image(
             painter =
                 painterResource(
-                    if (isFavoriteButtonClicked == true) {
+                    if (isFavoriteButtonClicked) {
                         R.drawable.added_to_favorites
                     } else {
                         R.drawable.not_added_to_favorites
@@ -268,7 +268,7 @@ private fun PopularMoviesCard(
                     .padding(top = dimensionResource(R.dimen.double_padding))
                     .clickable {
                         isFavoriteButtonClicked = isFavoriteButtonClicked.not()
-                        if (isFavoriteButtonClicked == true) {
+                        if (isFavoriteButtonClicked) {
                             onFavoriteButtonClicked(viewData.id)
                         } else {
                             onRemoveFavButtonClickedUiAction(viewData.id)

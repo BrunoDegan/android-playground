@@ -209,8 +209,8 @@ private fun NowPlayingMoviesCard(
     val imageRequest =
         ImageRequest
             .Builder(LocalContext.current)
-            .memoryCacheKey(viewData.title)
-            .diskCacheKey(viewData.title)
+            .memoryCacheKey(viewData.id.toString())
+            .diskCacheKey(viewData.id.toString())
             .data(viewData.posterPath)
             .decoderFactory(SvgDecoder.Factory())
             .scale(Scale.FIT)
@@ -222,9 +222,9 @@ private fun NowPlayingMoviesCard(
     val cardColor by animateColorAsState(
         targetValue =
             if (isFavoriteButtonClicked) {
-                MaterialTheme.colorScheme.onSecondary
+                MaterialTheme.colorScheme.inversePrimary
             } else {
-                MaterialTheme.colorScheme.primaryContainer
+                MaterialTheme.colorScheme.secondaryContainer
             },
         animationSpec =
             spring(
