@@ -1,10 +1,10 @@
 package com.brunodegan.androidplayground.data.datasources.domain.getUpcoming
 
 import com.brunodegan.androidplayground.base.network.base.Resource
-import com.brunodegan.androidplayground.data.datasources.local.entities.UpcomingMoviesEntity
-import com.brunodegan.androidplayground.data.repositories.MoviesRepository
 import com.brunodegan.androidplayground.domain.getUpComing.GetUpComingUseCase
 import com.brunodegan.androidplayground.domain.getUpComing.GetUpComingUseCaseImpl
+import com.brunodegan.androidplayground.domain.model.Movie
+import com.brunodegan.androidplayground.domain.repositories.MoviesRepository
 import com.brunodegan.androidplayground.testfixtures.MockUtils
 import com.brunodegan.androidplayground.testfixtures.MockUtils.getResourceError
 import com.brunodegan.androidplayground.testfixtures.TestDispatcherRule
@@ -40,7 +40,7 @@ class GetUpComingUseCaseTest {
     fun `GIVEN get upcoming movies WHEN invoke is called THEN emit Resource Success`() =
         runTest {
             // Given
-            val expectedData = Resource.Success(MockUtils.mockUpcomingMoviesEntity())
+            val expectedData = Resource.Success(MockUtils.mockUpcomingMovies())
             coEvery { repository.getUpcomingMovies() } returns
                 flow {
                     emit(expectedData)
@@ -64,7 +64,7 @@ class GetUpComingUseCaseTest {
         runTest {
             // GIVEN
             val exception = Exception("Error fetching upcoming movies")
-            val resourceError = getResourceError<ImmutableList<UpcomingMoviesEntity>>(exception)
+            val resourceError = getResourceError<ImmutableList<Movie>>(exception)
 
             coEvery { repository.getUpcomingMovies() } returns
                 flow {
@@ -76,7 +76,7 @@ class GetUpComingUseCaseTest {
 
             // THEN
             assertTrue {
-                result.first() is Resource.Error<ImmutableList<UpcomingMoviesEntity>>
+                result.first() is Resource.Error<ImmutableList<Movie>>
             }
             assertEquals(
                 "Error fetching upcoming movies",
@@ -97,7 +97,7 @@ class GetUpComingUseCaseTest {
             val result = useCase.invoke()
 
             // THEN
-            assertEquals(Resource.Success(persistentListOf<UpcomingMoviesEntity>()), result.first())
+            assertEquals(Resource.Success(persistentListOf<Movie>()), result.first())
         }
 
     @After

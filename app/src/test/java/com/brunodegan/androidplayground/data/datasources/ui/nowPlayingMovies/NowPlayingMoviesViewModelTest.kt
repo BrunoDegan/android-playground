@@ -3,15 +3,20 @@ package com.brunodegan.androidplayground.data.datasources.ui.nowPlayingMovies
 import app.cash.turbine.test
 import com.brunodegan.androidplayground.base.network.base.Resource
 import com.brunodegan.androidplayground.base.ui.SnackbarUiStateHolder
-import com.brunodegan.androidplayground.data.datasources.local.entities.NowPlayingMoviesEntity
 import com.brunodegan.androidplayground.domain.addToFavorites.AddToFavoritesUseCase
 import com.brunodegan.androidplayground.domain.getNowPlaying.GetNowPlayingUseCase
+import com.brunodegan.androidplayground.domain.model.FavoriteResult
+import com.brunodegan.androidplayground.domain.model.Movie
 import com.brunodegan.androidplayground.domain.removeFromFavorites.RemoveFromFavoritesUseCase
 import com.brunodegan.androidplayground.testfixtures.MockUtils.getResourceError
-import com.brunodegan.androidplayground.testfixtures.MockUtils.mockAddToFavoriteMoviesData
-import com.brunodegan.androidplayground.testfixtures.MockUtils.mockNowPlayingMoviesEntity
+import com.brunodegan.androidplayground.testfixtures.MockUtils.mockFavoriteResult
+import com.brunodegan.androidplayground.testfixtures.MockUtils.mockMovieUiModels
+import com.brunodegan.androidplayground.testfixtures.MockUtils.mockNowPlayingMovies
 import com.brunodegan.androidplayground.testfixtures.TestDispatcherRule
-import com.brunodegan.androidplayground.ui.screen.nowPlayingMovies.events.NowPlayingMoviesUiEvents
+import com.brunodegan.androidplayground.ui.mappers.ErrorUiModelMapper
+import com.brunodegan.androidplayground.ui.mappers.MovieUiModelMapper
+import com.brunodegan.androidplayground.ui.model.ErrorUiModel
+import com.brunodegan.androidplayground.ui.screen.nowPlayingMovies.actions.NowPlayingMoviesUiActions
 import com.brunodegan.androidplayground.ui.screen.nowPlayingMovies.state.NowPlayingMoviesUiState
 import com.brunodegan.androidplayground.ui.screen.nowPlayingMovies.viewModel.NowPlayingMoviesViewModel
 import io.mockk.coEvery
@@ -44,23 +49,25 @@ class NowPlayingMoviesViewModelTest {
                 addToFavoritesUseCase = addToFavoritesUseCase,
                 removeFromFavoritesUseCase = removeFromFavoritesUseCase,
                 dispatcher = testDispatcher,
+                movieUiModelMapper = MovieUiModelMapper(),
+                errorUiModelMapper = ErrorUiModelMapper(),
             )
     }
 
     @Test
     fun `GIVEN view model collects view entity succssefully WEN getNowPlayingMovies is invoked THEN asserts correct states is emitted`() =
         runTest {
-            val mockData = mockNowPlayingMoviesEntity()
+            val mockData = mockNowPlayingMovies()
             val successfullyResponse = Resource.Success(mockData)
 
             coEvery { getNowPlayingUseCase.invoke() } returns flow { emit(successfullyResponse) }
 
-            viewModel.getNowPlayingMovies()
+            viewModel.onUiAction(NowPlayingMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.uiState.test {
                 assertEquals(NowPlayingMoviesUiState.Initial, awaitItem())
                 assertEquals(NowPlayingMoviesUiState.Loading, awaitItem())
-                assertEquals(NowPlayingMoviesUiState.Success(mockData), awaitItem())
+                assertEquals(NowPlayingMoviesUiState.Success(mockMovieUiModels(mockData)), awaitItem())
             }
         }
 
@@ -68,16 +75,16 @@ class NowPlayingMoviesViewModelTest {
     fun `GIVEN view model collects view entity with error state propagated WEN getNowPlayingMovies is invoked THEN asserts business error occurs`() =
         runTest {
             val exception = Exception("Error retrieving upComing movies")
-            val resourceError = getResourceError<ImmutableList<NowPlayingMoviesEntity>>(exception)
+            val resourceError = getResourceError<ImmutableList<Movie>>(exception)
 
             coEvery { getNowPlayingUseCase.invoke() } returns flow { emit(resourceError) }
 
-            viewModel.getNowPlayingMovies()
+            viewModel.onUiAction(NowPlayingMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.uiState.test {
                 assertEquals(NowPlayingMoviesUiState.Initial, awaitItem())
                 assertEquals(NowPlayingMoviesUiState.Loading, awaitItem())
-                assertEquals(NowPlayingMoviesUiState.Error(resourceError.error), awaitItem())
+                assertEquals(NowPlayingMoviesUiState.Error(ErrorUiModel(resourceError.error.message)), awaitItem())
             }
         }
 
@@ -89,7 +96,7 @@ class NowPlayingMoviesViewModelTest {
 
             coEvery { getNowPlayingUseCase.invoke() } returns flow { throw systemError }
 
-            viewModel.getNowPlayingMovies()
+            viewModel.onUiAction(NowPlayingMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.snackbarState.test {
                 assertEquals(SnackbarUiStateHolder.SnackbarUi(errorMsg), awaitItem())
@@ -97,26 +104,26 @@ class NowPlayingMoviesViewModelTest {
         }
 
     @Test
-    fun `GIVEN previous error happens and users clicks onRetry button WHEN viewModel receives OnRetryButtonClickedUiEvent THEN asserts successfully state occurs`() =
+    fun `GIVEN previous error happens and users clicks onRetry button WHEN viewModel receives OnRetryButtonClickedUiAction THEN asserts successfully state occurs`() =
         runTest {
-            val mockData = mockNowPlayingMoviesEntity()
+            val mockData = mockNowPlayingMovies()
             val successfullyResponse = Resource.Success(mockData)
 
             coEvery { getNowPlayingUseCase.invoke() } returns flow { emit(successfullyResponse) }
 
-            viewModel.onUiEvent(event = NowPlayingMoviesUiEvents.OnRetryButtonClickedUiEvent)
+            viewModel.onUiAction(action = NowPlayingMoviesUiActions.OnRetryButtonClickedUiAction)
 
             viewModel.uiState.test {
                 assertEquals(NowPlayingMoviesUiState.Initial, awaitItem())
                 assertEquals(NowPlayingMoviesUiState.Loading, awaitItem())
-                assertEquals(NowPlayingMoviesUiState.Success(mockData), awaitItem())
+                assertEquals(NowPlayingMoviesUiState.Success(mockMovieUiModels(mockData)), awaitItem())
             }
         }
 
     @Test
-    fun `GIVEN success now playing movie data WHEN OnAddFavButtonClickedUiEvent is dispatched THEN asserts Initial and loading state and snackbar ui event is called`() =
+    fun `GIVEN success now playing movie data WHEN OnAddFavButtonClickedUiAction is dispatched THEN asserts Initial and loading state and snackbar ui event is called`() =
         runTest {
-            val mockAddFavoriteData = mockAddToFavoriteMoviesData()
+            val mockAddFavoriteData = mockFavoriteResult()
             val successfullyResponse = Resource.Success(mockAddFavoriteData)
             val movieId = 1
 
@@ -127,9 +134,9 @@ class NowPlayingMoviesViewModelTest {
                     )
                 }
 
-            viewModel.onUiEvent(
-                event =
-                    NowPlayingMoviesUiEvents.OnAddFavButtonClickedUiEvent(
+            viewModel.onUiAction(
+                action =
+                    NowPlayingMoviesUiActions.OnAddFavButtonClickedUiAction(
                         movieId,
                     ),
             )
@@ -143,9 +150,9 @@ class NowPlayingMoviesViewModelTest {
         }
 
     @Test
-    fun `GIVEN success remove from now playing movies data WHEN OnRemoveFavButtonClickedUiEvent is dispatched THEN asserts Initial and loading state and snackbar state is propagated`() =
+    fun `GIVEN success remove from now playing movies data WHEN OnRemoveFavButtonClickedUiAction is dispatched THEN asserts Initial and loading state and snackbar state is propagated`() =
         runTest {
-            val mockAddFavoriteData = mockAddToFavoriteMoviesData()
+            val mockAddFavoriteData = mockFavoriteResult()
             val successfullyResponse = Resource.Success(mockAddFavoriteData)
             val movieId = 1
 
@@ -154,9 +161,9 @@ class NowPlayingMoviesViewModelTest {
                     emit(successfullyResponse)
                 }
 
-            viewModel.onUiEvent(
-                event =
-                    NowPlayingMoviesUiEvents.OnRemoveFavButtonClickedUiEvent(
+            viewModel.onUiAction(
+                action =
+                    NowPlayingMoviesUiActions.OnRemoveFavButtonClickedUiAction(
                         movieId,
                     ),
             )
@@ -166,6 +173,42 @@ class NowPlayingMoviesViewModelTest {
                     SnackbarUiStateHolder.SnackbarUi(mockAddFavoriteData.statusMessage),
                     awaitItem(),
                 )
+            }
+        }
+
+    @Test
+    fun `GIVEN stream throws WHEN retry is dispatched THEN uiState ends in Error instead of staying Loading`() =
+        runTest {
+            coEvery { getNowPlayingUseCase.invoke() } returns flow { throw Throwable("boom") }
+
+            viewModel.onUiAction(NowPlayingMoviesUiActions.OnRetryButtonClickedUiAction)
+
+            viewModel.uiState.test {
+                assertEquals(NowPlayingMoviesUiState.Initial, awaitItem())
+                assertEquals(NowPlayingMoviesUiState.Loading, awaitItem())
+                assertEquals(NowPlayingMoviesUiState.Error(ErrorUiModel("boom")), awaitItem())
+            }
+        }
+
+    @Test
+    fun `GIVEN loaded list WHEN add favorite fails THEN snackbar is shown and list state is kept`() =
+        runTest {
+            val mockData = mockNowPlayingMovies()
+            val error = getResourceError<FavoriteResult>(Exception("add failed"))
+            coEvery { getNowPlayingUseCase.invoke() } returns flow { emit(Resource.Success(mockData)) }
+            coEvery { addToFavoritesUseCase.invoke(1) } returns flow { emit(error) }
+
+            viewModel.uiState.test {
+                assertEquals(NowPlayingMoviesUiState.Initial, awaitItem())
+                assertEquals(NowPlayingMoviesUiState.Loading, awaitItem())
+                assertEquals(NowPlayingMoviesUiState.Success(mockMovieUiModels(mockData)), awaitItem())
+
+                viewModel.onUiAction(NowPlayingMoviesUiActions.OnAddFavButtonClickedUiAction(1))
+
+                viewModel.snackbarState.test {
+                    assertEquals(SnackbarUiStateHolder.SnackbarUi(error.error.message.orEmpty()), awaitItem())
+                }
+                expectNoEvents()
             }
         }
 

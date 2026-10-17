@@ -2,16 +2,18 @@ package com.brunodegan.androidplayground.data.datasources.data.repositories
 
 import com.brunodegan.androidplayground.data.datasources.local.LocalDataSource
 import com.brunodegan.androidplayground.data.datasources.remote.RemoteDataSource
-import com.brunodegan.androidplayground.data.mappers.AddOrRemoveToFavoritesResponseDataMapper
-import com.brunodegan.androidplayground.data.mappers.FavoritesDataMapper
-import com.brunodegan.androidplayground.data.mappers.NowPlayingDataMapper
-import com.brunodegan.androidplayground.data.mappers.PopularDataMapper
-import com.brunodegan.androidplayground.data.mappers.TopRatedDataMapper
-import com.brunodegan.androidplayground.data.mappers.UpcomingDataMapper
+import com.brunodegan.androidplayground.data.mappers.addToFavorites.AddToFavoriteResultMapper
+import com.brunodegan.androidplayground.data.mappers.favorites.AddOrRemoveToFavoritesResponseDataMapper
+import com.brunodegan.androidplayground.data.mappers.favorites.FavoritesDataMapper
+import com.brunodegan.androidplayground.data.mappers.movies.MoviesEntityMapper
+import com.brunodegan.androidplayground.data.mappers.nowPlaying.NowPlayingDataMapper
+import com.brunodegan.androidplayground.data.mappers.popular.PopularDataMapper
+import com.brunodegan.androidplayground.data.mappers.topRated.TopRatedDataMapper
+import com.brunodegan.androidplayground.data.mappers.upComing.UpcomingDataMapper
 import com.brunodegan.androidplayground.data.metrics.Metrics
 import com.brunodegan.androidplayground.data.repositories.MoviesRepositoryImpl
-import com.brunodegan.androidplayground.data.sync.SyncCategory
-import com.brunodegan.androidplayground.data.sync.SyncOutcome
+import com.brunodegan.androidplayground.domain.model.SyncCategory
+import com.brunodegan.androidplayground.domain.model.SyncOutcome
 import com.brunodegan.androidplayground.testfixtures.MockUtils.mockAddToFavoriteMoviesData
 import com.brunodegan.androidplayground.testfixtures.MockUtils.mockFavoriteMoviesEntity
 import com.brunodegan.androidplayground.testfixtures.MockUtils.mockMoviesApiDataResponse
@@ -57,6 +59,8 @@ class MoviesRepositoryRefreshAllTest {
                 popularMoviesDataMapper = popularMapper,
                 topRatedMoviesDataMapper = topRatedMapper,
                 upcomingMoviesDataMapper = upcomingMapper,
+                addToFavoriteResultMapper = AddToFavoriteResultMapper(),
+                moviesEntityMapper = MoviesEntityMapper(),
                 localDataSource = localDataSource,
                 remoteDataSource = remoteDataSource,
                 metricsEventsDispatcher = metrics,
@@ -148,5 +152,17 @@ class MoviesRepositoryRefreshAllTest {
 
             assertTrue(result.outcomes[SyncCategory.TOP_RATED] is SyncOutcome.Failure)
             verify(exactly = 0) { localDataSource.saveTopRated(any()) }
+        }
+
+    @Test
+    fun `GIVEN remote favorites empty WHEN refreshAll THEN favorites succeed and local favorites cleared`() =
+        runTest {
+            stubAllRemoteSuccess()
+            every { favoritesMapper.map(any()) } returns emptyList()
+
+            val result = repository.refreshAll()
+
+            assertEquals(SyncOutcome.Success(0), result.outcomes[SyncCategory.FAVORITES])
+            verify(exactly = 1) { localDataSource.saveFavorites(emptyList()) }
         }
 }

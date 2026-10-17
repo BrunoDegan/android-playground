@@ -1,6 +1,6 @@
 package com.brunodegan.androidplayground.data.datasources.data.mappers
 
-import com.brunodegan.androidplayground.data.mappers.AddOrRemoveToFavoritesResponseDataMapper
+import com.brunodegan.androidplayground.data.mappers.favorites.AddOrRemoveToFavoritesResponseDataMapper
 import com.brunodegan.androidplayground.testfixtures.MockUtils
 import io.mockk.unmockkAll
 import org.junit.After

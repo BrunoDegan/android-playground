@@ -5,8 +5,13 @@ import com.brunodegan.androidplayground.data.datasources.local.entities.NowPlayi
 import com.brunodegan.androidplayground.data.datasources.local.entities.PopularMoviesEntity
 import com.brunodegan.androidplayground.data.datasources.local.entities.TopRatedMoviesEntity
 import com.brunodegan.androidplayground.data.datasources.local.entities.UpcomingMoviesEntity
+import com.brunodegan.androidplayground.data.mappers.movies.MoviesEntityMapper
+import com.brunodegan.androidplayground.domain.model.Movie
+import com.brunodegan.androidplayground.ui.mappers.MovieUiModelMapper
+import com.brunodegan.androidplayground.ui.model.MovieUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 object AndroidTestUtils {
     fun mockFavoriteMoviesEntity(): ImmutableList<FavoriteMoviesEntity> =
@@ -132,4 +137,24 @@ object AndroidTestUtils {
                 isFavorite = true,
             ),
         )
+
+    fun mockFavoriteMovieUiModels(): ImmutableList<MovieUiModel> = mockFavoriteMovies().map { MovieUiModelMapper().map(it) }.toImmutableList()
+
+    fun mockTopRatedMovieUiModels(): ImmutableList<MovieUiModel> = mockTopRatedMovies().map { MovieUiModelMapper().map(it) }.toImmutableList()
+
+    fun mockNowPlayingMovieUiModels(): ImmutableList<MovieUiModel> = mockNowPlayingMovies().map { MovieUiModelMapper().map(it) }.toImmutableList()
+
+    fun mockUpcomingMovieUiModels(): ImmutableList<MovieUiModel> = mockUpcomingMovies().map { MovieUiModelMapper().map(it) }.toImmutableList()
+
+    fun mockPopularMovieUiModels(): ImmutableList<MovieUiModel> = mockPopularMovies().map { MovieUiModelMapper().map(it) }.toImmutableList()
+
+    fun mockFavoriteMovies(): ImmutableList<Movie> = mockFavoriteMoviesEntity().map { MoviesEntityMapper().map(it) }.toImmutableList()
+
+    fun mockTopRatedMovies(): ImmutableList<Movie> = mockTopRatedMoviesEntity().map { MoviesEntityMapper().map(it) }.toImmutableList()
+
+    fun mockNowPlayingMovies(): ImmutableList<Movie> = mockNowPlayingMoviesEntity().map { MoviesEntityMapper().map(it) }.toImmutableList()
+
+    fun mockUpcomingMovies(): ImmutableList<Movie> = mockUpcomingMoviesEntity().map { MoviesEntityMapper().map(it) }.toImmutableList()
+
+    fun mockPopularMovies(): ImmutableList<Movie> = mockPopularMoviesEntity().map { MoviesEntityMapper().map(it) }.toImmutableList()
 }

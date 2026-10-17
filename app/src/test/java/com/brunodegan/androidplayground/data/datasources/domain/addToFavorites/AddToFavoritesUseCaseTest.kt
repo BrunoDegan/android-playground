@@ -1,10 +1,10 @@
 package com.brunodegan.androidplayground.data.datasources.domain.addToFavorites
 
 import com.brunodegan.androidplayground.base.network.base.Resource
-import com.brunodegan.androidplayground.data.datasources.local.entities.AddToFavoriteMoviesData
-import com.brunodegan.androidplayground.data.repositories.MoviesRepository
 import com.brunodegan.androidplayground.domain.addToFavorites.AddToFavoritesUseCase
 import com.brunodegan.androidplayground.domain.addToFavorites.AddToFavoritesUseCaseImpl
+import com.brunodegan.androidplayground.domain.model.FavoriteResult
+import com.brunodegan.androidplayground.domain.repositories.MoviesRepository
 import com.brunodegan.androidplayground.testfixtures.MockUtils
 import com.brunodegan.androidplayground.testfixtures.MockUtils.getResourceError
 import com.brunodegan.androidplayground.testfixtures.TestDispatcherRule
@@ -39,7 +39,7 @@ class AddToFavoritesUseCaseTest {
     fun `GIVEN favorite movies WHEN invoke is called THEN emit Resource_Success and call addFavorite once`() =
         runTest {
             // Given
-            val expectedData = Resource.Success(MockUtils.mockAddToFavoriteMoviesData())
+            val expectedData = Resource.Success(MockUtils.mockFavoriteResult())
             coEvery { repository.addFavorite(id = movieId) } returns
                 flow {
                     emit(expectedData)
@@ -63,7 +63,7 @@ class AddToFavoritesUseCaseTest {
         runTest {
             // GIVEN
             val exception = Exception("Error adding favorite movie")
-            val resourceError = getResourceError<AddToFavoriteMoviesData>(exception)
+            val resourceError = getResourceError<FavoriteResult>(exception)
 
             coEvery { repository.addFavorite(id = movieId) } returns
                 flow {
@@ -75,7 +75,7 @@ class AddToFavoritesUseCaseTest {
 
             // THEN
             assertTrue {
-                result.first() is Resource.Error<AddToFavoriteMoviesData>
+                result.first() is Resource.Error<FavoriteResult>
             }
             assertEquals("Error adding favorite movie", (result.first() as Resource.Error).error.message)
         }

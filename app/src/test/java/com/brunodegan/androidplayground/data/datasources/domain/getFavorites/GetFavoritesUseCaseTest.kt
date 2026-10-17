@@ -1,10 +1,10 @@
 package com.brunodegan.androidplayground.data.datasources.domain.getFavorites
 
 import com.brunodegan.androidplayground.base.network.base.Resource
-import com.brunodegan.androidplayground.data.datasources.local.entities.FavoriteMoviesEntity
-import com.brunodegan.androidplayground.data.repositories.MoviesRepository
 import com.brunodegan.androidplayground.domain.getFavorites.GetFavoritesUseCase
 import com.brunodegan.androidplayground.domain.getFavorites.GetFavoritesUseCaseImpl
+import com.brunodegan.androidplayground.domain.model.Movie
+import com.brunodegan.androidplayground.domain.repositories.MoviesRepository
 import com.brunodegan.androidplayground.testfixtures.MockUtils
 import com.brunodegan.androidplayground.testfixtures.MockUtils.getResourceError
 import com.brunodegan.androidplayground.testfixtures.TestDispatcherRule
@@ -40,7 +40,7 @@ class GetFavoritesUseCaseTest {
     fun `GIVEN favorite movies WHEN invoke is called THEN emit Resource_Success`() =
         runTest {
             // Given
-            val expectedData = Resource.Success(MockUtils.mockFavoriteMoviesEntity())
+            val expectedData = Resource.Success(MockUtils.mockFavoriteMovies())
             coEvery { repository.getFavorites() } returns
                 flow {
                     emit(expectedData)
@@ -64,7 +64,7 @@ class GetFavoritesUseCaseTest {
         runTest {
             // GIVEN
             val exception = Exception("Error fetching favorites")
-            val resourceError = getResourceError<ImmutableList<FavoriteMoviesEntity>>(exception)
+            val resourceError = getResourceError<ImmutableList<Movie>>(exception)
 
             coEvery { repository.getFavorites() } returns
                 flow {
@@ -76,7 +76,7 @@ class GetFavoritesUseCaseTest {
 
             // THEN
             assertTrue {
-                result.first() is Resource.Error<ImmutableList<FavoriteMoviesEntity>>
+                result.first() is Resource.Error<ImmutableList<Movie>>
             }
             assertEquals("Error fetching favorites", (result.first() as Resource.Error).error.message)
         }
@@ -94,7 +94,7 @@ class GetFavoritesUseCaseTest {
             val result = useCase.invoke()
 
             // THEN
-            assertEquals(Resource.Success(persistentListOf<FavoriteMoviesEntity>()), result.first())
+            assertEquals(Resource.Success(persistentListOf<Movie>()), result.first())
         }
 
     @After

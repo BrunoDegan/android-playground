@@ -1,4 +1,4 @@
-package com.brunodegan.androidplayground.data.sync
+package com.brunodegan.androidplayground.domain.model
 
 enum class SyncCategory { NOW_PLAYING, POPULAR, TOP_RATED, UPCOMING, FAVORITES }
 

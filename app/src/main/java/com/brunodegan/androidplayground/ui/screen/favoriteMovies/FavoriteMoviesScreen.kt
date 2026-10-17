@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import coil.request.ImageRequest
@@ -56,9 +57,9 @@ import com.brunodegan.androidplayground.base.ui.LoaderUiState
 import com.brunodegan.androidplayground.base.ui.ObserveAsEvent
 import com.brunodegan.androidplayground.base.ui.PosterShape
 import com.brunodegan.androidplayground.base.ui.SnackbarUiStateHolder
-import com.brunodegan.androidplayground.data.datasources.local.entities.FavoriteMoviesEntity
 import com.brunodegan.androidplayground.data.metrics.TrackScreen
-import com.brunodegan.androidplayground.ui.screen.favoriteMovies.events.FavoriteMoviesUiEvents
+import com.brunodegan.androidplayground.ui.model.MovieUiModel
+import com.brunodegan.androidplayground.ui.screen.favoriteMovies.actions.FavoriteMoviesUiActions
 import com.brunodegan.androidplayground.ui.screen.favoriteMovies.state.FavoriteMoviesUiState
 import com.brunodegan.androidplayground.ui.screen.favoriteMovies.viewModel.FavoritesViewModel
 import com.skydoves.compose.stability.runtime.TraceRecomposition
@@ -77,7 +78,8 @@ fun FavoriteMoviesScreen(
     onNavigateUp: () -> Unit,
     onShowSnackbar: (String) -> Unit,
 ) {
-    val viewModel: FavoritesViewModel = koinViewModel()
+    val viewModelStore = rememberViewModelStoreOwner()
+    val viewModel: FavoritesViewModel = koinViewModel(viewModelStoreOwner = viewModelStore)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     BackHandler {
@@ -98,7 +100,7 @@ fun FavoriteMoviesScreen(
         listState = listState,
         modifier = modifier,
     ) {
-        viewModel.onUiEvent(event = it)
+        viewModel.onUiAction(action = it)
     }
 }
 
@@ -110,7 +112,7 @@ internal fun FavoritesMoviesScreenContent(
     listState: LazyListState,
     state: FavoriteMoviesUiState,
     modifier: Modifier,
-    onEvent: (FavoriteMoviesUiEvents) -> Unit,
+    onAction: (FavoriteMoviesUiActions) -> Unit,
 ) {
     when (state) {
         is FavoriteMoviesUiState.Initial -> {
@@ -135,7 +137,7 @@ internal fun FavoritesMoviesScreenContent(
                 modifier = modifier,
                 errorData = state.error,
             ) {
-                onEvent(FavoriteMoviesUiEvents.OnRetryButtonClickedUiEvent)
+                onAction(FavoriteMoviesUiActions.OnRetryButtonClickedUiAction)
             }
         }
     }
@@ -147,7 +149,7 @@ fun SuccessState(
     modifier: Modifier,
     listState: LazyListState,
     scrollBehavior: TopAppBarScrollBehavior,
-    viewData: ImmutableList<FavoriteMoviesEntity>,
+    viewData: ImmutableList<MovieUiModel>,
 ) {
     LazyColumn(
         state = listState,
@@ -169,7 +171,7 @@ fun SuccessState(
 
 @Composable
 fun FavoritesMoviesCard(
-    viewData: FavoriteMoviesEntity,
+    viewData: MovieUiModel,
     modifier: Modifier = Modifier,
 ) {
     val imageRequest =
@@ -314,17 +316,16 @@ fun PopularMoviesScreenPreview() {
             FavoriteMoviesUiState.Success(
                 viewData =
                     persistentListOf(
-                        FavoriteMoviesEntity(
+                        MovieUiModel(
                             id = 0,
                             title = "title",
                             posterPath = "posterPath",
                             overview = "overview",
-                            lastUpdated = 1212,
                             releaseDate = "29/04/2025",
                         ),
                     ),
             ),
-        onEvent = {},
+        onAction = {},
         modifier = Modifier,
     )
 }

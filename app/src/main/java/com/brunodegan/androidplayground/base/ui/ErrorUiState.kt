@@ -27,12 +27,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.content.res.ResourcesCompat
 import com.brunodegan.androidplayground.R
-import com.brunodegan.androidplayground.base.network.base.ErrorType
+import com.brunodegan.androidplayground.ui.model.ErrorUiModel
 
 @Composable
 fun ErrorUiState(
     modifier: Modifier = Modifier,
-    errorData: ErrorType,
+    errorData: ErrorUiModel,
     onRetryButtonClicked: () -> Unit,
 ) {
     Box(

@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import coil.request.ImageRequest
@@ -69,9 +70,9 @@ import com.brunodegan.androidplayground.base.ui.LoaderUiState
 import com.brunodegan.androidplayground.base.ui.ObserveAsEvent
 import com.brunodegan.androidplayground.base.ui.PosterShape
 import com.brunodegan.androidplayground.base.ui.SnackbarUiStateHolder
-import com.brunodegan.androidplayground.data.datasources.local.entities.NowPlayingMoviesEntity
 import com.brunodegan.androidplayground.data.metrics.TrackScreen
-import com.brunodegan.androidplayground.ui.screen.nowPlayingMovies.events.NowPlayingMoviesUiEvents
+import com.brunodegan.androidplayground.ui.model.MovieUiModel
+import com.brunodegan.androidplayground.ui.screen.nowPlayingMovies.actions.NowPlayingMoviesUiActions
 import com.brunodegan.androidplayground.ui.screen.nowPlayingMovies.state.NowPlayingMoviesUiState
 import com.brunodegan.androidplayground.ui.screen.nowPlayingMovies.viewModel.NowPlayingMoviesViewModel
 import com.skydoves.compose.stability.runtime.TraceRecomposition
@@ -90,7 +91,8 @@ fun NowPlayingMoviesScreen(
     onNavigateUp: () -> Unit,
     onShowSnackbar: (String) -> Unit,
 ) {
-    val viewModel: NowPlayingMoviesViewModel = koinViewModel()
+    val viewModelStore = rememberViewModelStoreOwner()
+    val viewModel: NowPlayingMoviesViewModel = koinViewModel(viewModelStoreOwner = viewModelStore)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     BackHandler {
@@ -111,7 +113,7 @@ fun NowPlayingMoviesScreen(
         scrollBehavior = scrollBehavior,
         modifier = modifier,
     ) {
-        viewModel.onUiEvent(event = it)
+        viewModel.onUiAction(action = it)
     }
 }
 
@@ -123,7 +125,7 @@ internal fun NowPlayingMoviesScreenContent(
     scrollBehavior: TopAppBarScrollBehavior,
     state: NowPlayingMoviesUiState,
     modifier: Modifier,
-    onEvent: (NowPlayingMoviesUiEvents) -> Unit,
+    onAction: (NowPlayingMoviesUiActions) -> Unit,
 ) {
     when (state) {
         is NowPlayingMoviesUiState.Initial -> {
@@ -137,10 +139,10 @@ internal fun NowPlayingMoviesScreenContent(
                 listState = listState,
                 viewData = state.viewData,
                 onFavoriteButtonClicked = {
-                    onEvent(NowPlayingMoviesUiEvents.OnAddFavButtonClickedUiEvent(it))
+                    onAction(NowPlayingMoviesUiActions.OnAddFavButtonClickedUiAction(it))
                 },
-                onRemoveFavButtonClickedUiEvent = {
-                    onEvent(NowPlayingMoviesUiEvents.OnRemoveFavButtonClickedUiEvent(it))
+                onRemoveFavButtonClickedUiAction = {
+                    onAction(NowPlayingMoviesUiActions.OnRemoveFavButtonClickedUiAction(it))
                 },
             )
         }
@@ -150,7 +152,7 @@ internal fun NowPlayingMoviesScreenContent(
                 modifier = modifier,
                 errorData = state.error,
             ) {
-                onEvent(NowPlayingMoviesUiEvents.OnRetryButtonClickedUiEvent)
+                onAction(NowPlayingMoviesUiActions.OnRetryButtonClickedUiAction)
             }
         }
 
@@ -166,9 +168,9 @@ private fun SuccessState(
     modifier: Modifier = Modifier,
     scrollBehavior: TopAppBarScrollBehavior,
     listState: LazyListState,
-    viewData: ImmutableList<NowPlayingMoviesEntity>,
+    viewData: ImmutableList<MovieUiModel>,
     onFavoriteButtonClicked: (Int) -> Unit,
-    onRemoveFavButtonClickedUiEvent: (Int) -> Unit,
+    onRemoveFavButtonClickedUiAction: (Int) -> Unit,
 ) {
     LazyColumn(
         state = listState,
@@ -188,8 +190,8 @@ private fun SuccessState(
                 onFavoriteButtonClicked = {
                     onFavoriteButtonClicked(it)
                 },
-                onRemoveFavButtonClickedUiEvent = {
-                    onRemoveFavButtonClickedUiEvent(it)
+                onRemoveFavButtonClickedUiAction = {
+                    onRemoveFavButtonClickedUiAction(it)
                 },
             )
         }
@@ -199,16 +201,16 @@ private fun SuccessState(
 @Composable
 private fun NowPlayingMoviesCard(
     modifier: Modifier = Modifier,
-    viewData: NowPlayingMoviesEntity,
+    viewData: MovieUiModel,
     onFavoriteButtonClicked: (Int) -> Unit,
-    onRemoveFavButtonClickedUiEvent: (Int) -> Unit,
+    onRemoveFavButtonClickedUiAction: (Int) -> Unit,
 ) {
     var isFavoriteButtonClicked by rememberSaveable { mutableStateOf(viewData.isFavorite) }
     val imageRequest =
         ImageRequest
             .Builder(LocalContext.current)
-            .memoryCacheKey(viewData.title)
-            .diskCacheKey(viewData.title)
+            .memoryCacheKey(viewData.id.toString())
+            .diskCacheKey(viewData.id.toString())
             .data(viewData.posterPath)
             .decoderFactory(SvgDecoder.Factory())
             .scale(Scale.FIT)
@@ -220,9 +222,9 @@ private fun NowPlayingMoviesCard(
     val cardColor by animateColorAsState(
         targetValue =
             if (isFavoriteButtonClicked) {
-                MaterialTheme.colorScheme.onSecondary
+                MaterialTheme.colorScheme.inversePrimary
             } else {
-                MaterialTheme.colorScheme.primaryContainer
+                MaterialTheme.colorScheme.secondaryContainer
             },
         animationSpec =
             spring(
@@ -268,7 +270,7 @@ private fun NowPlayingMoviesCard(
                         if (isFavoriteButtonClicked) {
                             onFavoriteButtonClicked(viewData.id)
                         } else {
-                            onRemoveFavButtonClickedUiEvent(viewData.id)
+                            onRemoveFavButtonClickedUiAction(viewData.id)
                         }
                     },
         )
@@ -478,7 +480,7 @@ fun NowPlayingScreenPreview() {
             NowPlayingMoviesUiState.Success(
                 viewData =
                     persistentListOf(
-                        NowPlayingMoviesEntity(
+                        MovieUiModel(
                             id = 0,
                             title = "title",
                             posterPath = "posterPath",
@@ -491,7 +493,7 @@ fun NowPlayingScreenPreview() {
                         ),
                     ),
             ),
-        onEvent = {},
+        onAction = {},
         modifier = Modifier,
         scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
     )

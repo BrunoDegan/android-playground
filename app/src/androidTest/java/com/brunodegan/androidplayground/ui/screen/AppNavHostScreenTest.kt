@@ -6,7 +6,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -71,9 +71,9 @@ class AppNavHostScreenTest {
                         scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
                         state =
                             UpComingMoviesUiState.Success(
-                                viewData = AndroidTestUtils.mockUpcomingMoviesEntity(),
+                                viewData = AndroidTestUtils.mockUpcomingMovieUiModels(),
                             ),
-                        onEvent = {},
+                        onAction = {},
                         modifier = Modifier,
                     )
                 }
@@ -118,9 +118,9 @@ class AppNavHostScreenTest {
                         scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
                         state =
                             NowPlayingMoviesUiState.Success(
-                                viewData = AndroidTestUtils.mockNowPlayingMoviesEntity(),
+                                viewData = AndroidTestUtils.mockNowPlayingMovieUiModels(),
                             ),
-                        onEvent = {},
+                        onAction = {},
                         modifier = Modifier,
                     )
                 }
@@ -165,9 +165,9 @@ class AppNavHostScreenTest {
                         scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
                         state =
                             FavoriteMoviesUiState.Success(
-                                viewData = AndroidTestUtils.mockFavoriteMoviesEntity(),
+                                viewData = AndroidTestUtils.mockFavoriteMovieUiModels(),
                             ),
-                        onEvent = {},
+                        onAction = {},
                         modifier = Modifier,
                     )
                 }
@@ -202,9 +202,9 @@ class AppNavHostScreenTest {
                         scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
                         state =
                             PopularMoviesUiState.Success(
-                                viewData = AndroidTestUtils.mockPopularMoviesEntity(),
+                                viewData = AndroidTestUtils.mockPopularMovieUiModels(),
                             ),
-                        onEvent = {},
+                        onAction = {},
                         modifier = Modifier,
                     )
                 }
@@ -249,9 +249,9 @@ class AppNavHostScreenTest {
                         scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
                         state =
                             TopRatedMoviesUiState.Success(
-                                viewData = AndroidTestUtils.mockTopRatedMoviesEntity(),
+                                viewData = AndroidTestUtils.mockTopRatedMovieUiModels(),
                             ),
-                        onEvent = {},
+                        onAction = {},
                         modifier = Modifier,
                     )
                 }

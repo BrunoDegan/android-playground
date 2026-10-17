@@ -1,21 +1,22 @@
-package com.brunodegan.androidplayground.data.mappers
+package com.brunodegan.androidplayground.data.mappers.topRated
 
 import com.brunodegan.androidplayground.base.utils.formatFullCDNUrl
 import com.brunodegan.androidplayground.base.utils.formatUsDateToBrDate
 import com.brunodegan.androidplayground.base.utils.orZero
 import com.brunodegan.androidplayground.data.datasources.local.entities.MoviesApiDataResponse
-import com.brunodegan.androidplayground.data.datasources.local.entities.NowPlayingMoviesEntity
+import com.brunodegan.androidplayground.data.datasources.local.entities.TopRatedMoviesEntity
+import com.brunodegan.androidplayground.data.mappers.BaseMapper
 import org.koin.core.annotation.Factory
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @Factory
-class NowPlayingDataMapper : BaseMapper<MoviesApiDataResponse, List<NowPlayingMoviesEntity>> {
-    override fun map(input: MoviesApiDataResponse): List<NowPlayingMoviesEntity> =
+class TopRatedDataMapper : BaseMapper<MoviesApiDataResponse, List<TopRatedMoviesEntity>> {
+    override fun map(input: MoviesApiDataResponse): List<TopRatedMoviesEntity> =
         buildList {
             input.results.forEach { movie ->
                 add(
-                    NowPlayingMoviesEntity(
+                    TopRatedMoviesEntity(
                         id = movie.id ?: Random.nextInt(),
                         title = movie.title.orEmpty(),
                         posterPath = movie.posterPath.formatFullCDNUrl(),

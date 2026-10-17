@@ -12,8 +12,15 @@ import com.brunodegan.androidplayground.data.datasources.local.entities.NowPlayi
 import com.brunodegan.androidplayground.data.datasources.local.entities.PopularMoviesEntity
 import com.brunodegan.androidplayground.data.datasources.local.entities.TopRatedMoviesEntity
 import com.brunodegan.androidplayground.data.datasources.local.entities.UpcomingMoviesEntity
+import com.brunodegan.androidplayground.data.mappers.addToFavorites.AddToFavoriteResultMapper
+import com.brunodegan.androidplayground.data.mappers.movies.MoviesEntityMapper
+import com.brunodegan.androidplayground.domain.model.FavoriteResult
+import com.brunodegan.androidplayground.domain.model.Movie
+import com.brunodegan.androidplayground.ui.mappers.MovieUiModelMapper
+import com.brunodegan.androidplayground.ui.model.MovieUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.serialization.json.Json
 
 object MockUtils {
@@ -194,4 +201,18 @@ object MockUtils {
     inline fun <reified T> toJsonString(obj: T): String = Json.encodeToString(obj)
 
     fun <T> getResourceError(exception: Exception) = Resource.Error<T>(ErrorType.Generic(exception.message))
+
+    fun mockMovieUiModels(movies: ImmutableList<Movie>): ImmutableList<MovieUiModel> = movies.map { MovieUiModelMapper().map(it) }.toImmutableList()
+
+    fun mockFavoriteMovies(): ImmutableList<Movie> = mockFavoriteMoviesEntity().map { MoviesEntityMapper().map(it) }.toImmutableList()
+
+    fun mockTopRatedMovies(): ImmutableList<Movie> = mockTopRatedMoviesEntity().map { MoviesEntityMapper().map(it) }.toImmutableList()
+
+    fun mockNowPlayingMovies(): ImmutableList<Movie> = mockNowPlayingMoviesEntity().map { MoviesEntityMapper().map(it) }.toImmutableList()
+
+    fun mockUpcomingMovies(): ImmutableList<Movie> = mockUpcomingMoviesEntity().map { MoviesEntityMapper().map(it) }.toImmutableList()
+
+    fun mockPopularMovies(): ImmutableList<Movie> = mockPopularMoviesEntity().map { MoviesEntityMapper().map(it) }.toImmutableList()
+
+    fun mockFavoriteResult(): FavoriteResult = AddToFavoriteResultMapper().map(mockAddToFavoriteMoviesData())
 }

@@ -21,6 +21,8 @@ fun String?.formatUsDateToBrDate(): String {
     }
 }
 
+fun String.toSortableDate(): String = split("/").reversed().joinToString("")
+
 private const val DEFAULT_CACHE_EXPIRATION_MILLIS = 10 * 60 * 1000L
 
 fun isCacheValid(

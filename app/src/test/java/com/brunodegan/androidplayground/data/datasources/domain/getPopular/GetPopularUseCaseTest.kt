@@ -1,10 +1,10 @@
 package com.brunodegan.androidplayground.data.datasources.domain.getPopular
 
 import com.brunodegan.androidplayground.base.network.base.Resource
-import com.brunodegan.androidplayground.data.datasources.local.entities.PopularMoviesEntity
-import com.brunodegan.androidplayground.data.repositories.MoviesRepository
 import com.brunodegan.androidplayground.domain.getPopular.GetPopularUseCase
 import com.brunodegan.androidplayground.domain.getPopular.GetPopularUseCaseImpl
+import com.brunodegan.androidplayground.domain.model.Movie
+import com.brunodegan.androidplayground.domain.repositories.MoviesRepository
 import com.brunodegan.androidplayground.testfixtures.MockUtils
 import com.brunodegan.androidplayground.testfixtures.MockUtils.getResourceError
 import com.brunodegan.androidplayground.testfixtures.TestDispatcherRule
@@ -40,7 +40,7 @@ class GetPopularUseCaseTest {
     fun `GIVEN popular movies WHEN invoke is called THEN emit Resource_Success`() =
         runTest {
             // Given
-            val expectedData = Resource.Success(MockUtils.mockPopularMoviesEntity())
+            val expectedData = Resource.Success(MockUtils.mockPopularMovies())
             coEvery { repository.getPopularMovies() } returns
                 flow {
                     emit(expectedData)
@@ -64,7 +64,7 @@ class GetPopularUseCaseTest {
         runTest {
             // GIVEN
             val exception = Exception("Error fetching popular movies")
-            val resourceError = getResourceError<ImmutableList<PopularMoviesEntity>>(exception)
+            val resourceError = getResourceError<ImmutableList<Movie>>(exception)
 
             coEvery { repository.getPopularMovies() } returns
                 flow {
@@ -76,7 +76,7 @@ class GetPopularUseCaseTest {
 
             // THEN
             assertTrue {
-                result.first() is Resource.Error<ImmutableList<PopularMoviesEntity>>
+                result.first() is Resource.Error<ImmutableList<Movie>>
             }
             assertEquals(
                 "Error fetching popular movies",
@@ -97,7 +97,7 @@ class GetPopularUseCaseTest {
             val result = useCase.invoke()
 
             // THEN
-            assertEquals(Resource.Success(persistentListOf<PopularMoviesEntity>()), result.first())
+            assertEquals(Resource.Success(persistentListOf<Movie>()), result.first())
         }
 
     @After

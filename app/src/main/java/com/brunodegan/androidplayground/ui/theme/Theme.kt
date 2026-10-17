@@ -14,8 +14,8 @@ import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme =
     darkColorScheme(
-        primaryContainer = Color(0xFF00BCD4),
-        secondaryContainer = Color(0xFF3F51B5),
+        primaryContainer = primaryContainerColor,
+        secondaryContainer = surfaceColor,
         primary = Color.Transparent,
         onPrimary = Color.White,
         secondary = Color.White,
@@ -23,15 +23,15 @@ private val DarkColorScheme =
         tertiary = Color.White,
         onTertiary = Color.White,
         background = Color.Transparent,
-        onSurface = Color(0xFF03A9F4),
-        surface = Color(0xFF3F51B5),
+        onSurface = onSurfaceColor,
+        surface = surfaceColor,
         onError = Color.Transparent,
     )
 
 private val LightColorScheme =
     lightColorScheme(
-        primaryContainer = Color(0xFF00BCD4),
-        secondaryContainer = Color(0xFF3F51B5),
+        primaryContainer = primaryContainerColor,
+        secondaryContainer = secondaryContainerColor,
         primary = Color.Transparent,
         onPrimary = Color.White,
         secondary = Color.LightGray,
@@ -40,8 +40,8 @@ private val LightColorScheme =
         onTertiary = Color.White,
         background = Color.Transparent,
         onBackground = Color(0xFF1C1B1F),
-        onSurface = Color(0xFF03A9F4),
-        surface = Color(0xFF3F51B5),
+        onSurface = onSurfaceColor,
+        surface = surfaceColor,
         onError = Color.Transparent,
     )
 
@@ -67,8 +67,13 @@ fun AndroidPlaygroundTheme(
                 if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
             }
 
-            darkTheme -> DarkColorScheme
-            else -> LightColorScheme
+            darkTheme -> {
+                DarkColorScheme
+            }
+
+            else -> {
+                LightColorScheme
+            }
         }
 
     MaterialTheme(

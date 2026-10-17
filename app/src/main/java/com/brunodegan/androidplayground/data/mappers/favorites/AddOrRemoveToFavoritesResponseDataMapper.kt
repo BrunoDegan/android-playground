@@ -1,7 +1,8 @@
-package com.brunodegan.androidplayground.data.mappers
+package com.brunodegan.androidplayground.data.mappers.favorites
 
 import com.brunodegan.androidplayground.data.datasources.local.entities.AddToFavoriteMoviesData
 import com.brunodegan.androidplayground.data.datasources.local.entities.AddToFavoritesApiResponse
+import com.brunodegan.androidplayground.data.mappers.BaseMapper
 import org.koin.core.annotation.Factory
 
 @Factory

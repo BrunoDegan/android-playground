@@ -1,10 +1,10 @@
 package com.brunodegan.androidplayground.data.datasources.domain.removeFromFavorites
 
 import com.brunodegan.androidplayground.base.network.base.Resource
-import com.brunodegan.androidplayground.data.datasources.local.entities.AddToFavoriteMoviesData
-import com.brunodegan.androidplayground.data.repositories.MoviesRepository
+import com.brunodegan.androidplayground.domain.model.FavoriteResult
 import com.brunodegan.androidplayground.domain.removeFromFavorites.RemoveFromFavoritesUseCase
 import com.brunodegan.androidplayground.domain.removeFromFavorites.RemoveFromFavoritesUseCaseImpl
+import com.brunodegan.androidplayground.domain.repositories.MoviesRepository
 import com.brunodegan.androidplayground.testfixtures.MockUtils
 import com.brunodegan.androidplayground.testfixtures.MockUtils.getResourceError
 import com.brunodegan.androidplayground.testfixtures.TestDispatcherRule
@@ -39,7 +39,7 @@ class RemoveFromFavoritesUseCaseTest {
     fun `GIVEN favorite movies WHEN invoke is called THEN emit Resource_Success and call removeFavorite once`() =
         runTest {
             // Given
-            val expectedData = Resource.Success(MockUtils.mockAddToFavoriteMoviesData())
+            val expectedData = Resource.Success(MockUtils.mockFavoriteResult())
             coEvery { repository.removeFavorite(id = movieId) } returns
                 flow {
                     emit(expectedData)
@@ -63,7 +63,7 @@ class RemoveFromFavoritesUseCaseTest {
         runTest {
             // GIVEN
             val exception = Exception("Error removing favorite movie")
-            val resourceError = getResourceError<AddToFavoriteMoviesData>(exception)
+            val resourceError = getResourceError<FavoriteResult>(exception)
 
             coEvery { repository.removeFavorite(id = movieId) } returns
                 flow {
@@ -75,7 +75,7 @@ class RemoveFromFavoritesUseCaseTest {
 
             // THEN
             assertTrue {
-                result.first() is Resource.Error<AddToFavoriteMoviesData>
+                result.first() is Resource.Error<FavoriteResult>
             }
             assertEquals(
                 "Error removing favorite movie",

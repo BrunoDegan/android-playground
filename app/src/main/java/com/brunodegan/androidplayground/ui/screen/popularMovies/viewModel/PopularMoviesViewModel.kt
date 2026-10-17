@@ -1,136 +1,45 @@
 package com.brunodegan.androidplayground.ui.screen.popularMovies.viewModel
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.brunodegan.androidplayground.base.dispatchers.DispatchersProviderInterface
-import com.brunodegan.androidplayground.base.network.base.Resource
-import com.brunodegan.androidplayground.base.ui.SnackbarUiStateHolder
+import com.brunodegan.androidplayground.base.ui.MovieListUiState
+import com.brunodegan.androidplayground.base.ui.viewModel.CommonViewModel
 import com.brunodegan.androidplayground.domain.addToFavorites.AddToFavoritesUseCase
 import com.brunodegan.androidplayground.domain.getPopular.GetPopularUseCase
 import com.brunodegan.androidplayground.domain.removeFromFavorites.RemoveFromFavoritesUseCase
-import com.brunodegan.androidplayground.ui.screen.popularMovies.events.PopularMoviesUiEvents
+import com.brunodegan.androidplayground.ui.mappers.ErrorUiModelMapper
+import com.brunodegan.androidplayground.ui.mappers.MovieUiModelMapper
+import com.brunodegan.androidplayground.ui.screen.popularMovies.actions.PopularMoviesUiActions
 import com.brunodegan.androidplayground.ui.screen.popularMovies.state.PopularMoviesUiState
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
 class PopularMoviesViewModel(
-    private val useCase: GetPopularUseCase,
-    private val addToFavoritesUseCase: AddToFavoritesUseCase,
-    private val removeFromFavoritesUseCase: RemoveFromFavoritesUseCase,
-    private val dispatcher: DispatchersProviderInterface,
-) : ViewModel() {
-    private val _snackbarState = Channel<SnackbarUiStateHolder>()
-    val snackbarState = _snackbarState.receiveAsFlow()
-
-    private val _uiState = MutableStateFlow<PopularMoviesUiState>(PopularMoviesUiState.Initial)
-    val uiState =
-        _uiState
-            .onStart {
-                getPopularMovies()
-            }.stateIn(
-                viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = PopularMoviesUiState.Initial,
-            )
-
-    fun onUiEvent(event: PopularMoviesUiEvents) {
-        when (event) {
-            is PopularMoviesUiEvents.OnRetryButtonClickedUiEvent -> getPopularMovies()
-
-            is PopularMoviesUiEvents.OnAddFavButtonClickedUiEvent ->
-                addMovieToFavorites(event.id)
-
-            is PopularMoviesUiEvents.OnRemoveFavButtonClickedUiEvent ->
-                removeMovieFromFavorites(
-                    event.id,
-                )
-        }
-    }
-
-    fun getPopularMovies() {
-        viewModelScope.launch {
-            useCase()
-                .flowOn(dispatcher.io)
-                .distinctUntilChanged()
-                .onStart {
-                    _uiState.update { PopularMoviesUiState.Loading }
-                }.catch { error ->
-                    error.message?.let {
-                        _snackbarState.send(SnackbarUiStateHolder.SnackbarUi(it))
-                    }
-                }.collectLatest { result ->
-                    when (result) {
-                        is Resource.Success -> {
-                            _uiState.value = PopularMoviesUiState.Success(result.data)
-                        }
-
-                        is Resource.Error -> {
-                            _uiState.value = PopularMoviesUiState.Error(result.error)
-                        }
-                    }
-                }
-        }
-    }
-
-    private fun addMovieToFavorites(movieId: Int) {
-        viewModelScope.launch {
-            addToFavoritesUseCase
-                .invoke(movieId)
-                .flowOn(dispatcher.io)
-                .distinctUntilChanged()
-                .catch { error ->
-                    error.message?.let {
-                        _snackbarState.send(SnackbarUiStateHolder.SnackbarUi(it))
-                    }
-                }.collectLatest { result ->
-                    when (result) {
-                        is Resource.Success -> {
-                            _snackbarState.send(SnackbarUiStateHolder.SnackbarUi(result.data.statusMessage))
-                        }
-
-                        is Resource.Error -> {
-                            _uiState.value = PopularMoviesUiState.Error(result.error)
-                        }
-                    }
-                }
-        }
-    }
-
-    private fun removeMovieFromFavorites(movieId: Int) {
-        viewModelScope.launch {
-            removeFromFavoritesUseCase
-                .invoke(movieId)
-                .flowOn(dispatcher.io)
-                .distinctUntilChanged()
-                .catch { error ->
-                    error.message?.let {
-                        _snackbarState.send(SnackbarUiStateHolder.SnackbarUi(it))
-                    }
-                }.collectLatest { result ->
-                    when (result) {
-                        is Resource.Success -> {
-                            if (result.data.success) {
-                                _snackbarState.send(SnackbarUiStateHolder.SnackbarUi(result.data.statusMessage))
-                            }
-                        }
-
-                        is Resource.Error -> {
-                            _uiState.value = PopularMoviesUiState.Error(result.error)
-                        }
-                    }
-                }
+    useCase: GetPopularUseCase,
+    addToFavoritesUseCase: AddToFavoritesUseCase,
+    removeFromFavoritesUseCase: RemoveFromFavoritesUseCase,
+    movieUiModelMapper: MovieUiModelMapper,
+    errorUiModelMapper: ErrorUiModelMapper,
+    dispatcher: DispatchersProviderInterface,
+) : CommonViewModel<PopularMoviesUiState>(
+        loadMovies = { useCase() },
+        states =
+            MovieListUiState(
+                initial = PopularMoviesUiState.Initial,
+                loading = PopularMoviesUiState.Loading,
+                success = PopularMoviesUiState::Success,
+                error = PopularMoviesUiState::Error,
+            ),
+        movieUiModelMapper = movieUiModelMapper,
+        errorUiModelMapper = errorUiModelMapper,
+        addToFavoritesUseCase = addToFavoritesUseCase,
+        removeFromFavoritesUseCase = removeFromFavoritesUseCase,
+        dispatcher = dispatcher,
+    ) {
+    fun onUiAction(action: PopularMoviesUiActions) {
+        when (action) {
+            is PopularMoviesUiActions.OnRetryButtonClickedUiAction -> load()
+            is PopularMoviesUiActions.OnAddFavButtonClickedUiAction -> addFavorite(action.id)
+            is PopularMoviesUiActions.OnRemoveFavButtonClickedUiAction -> removeFavorite(action.id)
         }
     }
 }
